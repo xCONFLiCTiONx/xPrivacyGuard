@@ -6,7 +6,8 @@
   "permissions": [
     "storage",
     "activeTab",
-    "scripting"
+    "scripting",
+    "declarativeNetRequest"
   ],
   "host_permissions": [
     "<all_urls>",
@@ -37,5 +38,14 @@
       ],
       "run_at": "document_start"
     }
-  ]
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "gpc_rules",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  }
 }

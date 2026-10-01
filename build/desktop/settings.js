@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const modeSelect = document.getElementById("mode");
+  const gpcCheckbox = document.getElementById("enableGPC");
   const domainListEl = document.getElementById("domain-list");
   const newDomainInput = document.getElementById("new-domain-input");
   const addDomainBtn = document.getElementById("add-domain-btn");
@@ -49,10 +50,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function loadSettings() {
-    const data = await chrome.storage.local.get(["mode", "excludedDomains"]);
+    const data = await chrome.storage.local.get(["mode", "enableGPC", "excludedDomains"]);
     if (data.mode) {
       modeSelect.value = data.mode;
     }
+    gpcCheckbox.checked = data.enableGPC !== false;
     excludedDomains = data.excludedDomains || [];
     renderDomains();
   }
@@ -60,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function saveSettings() {
     await chrome.storage.local.set({
       mode: modeSelect.value,
+      enableGPC: gpcCheckbox.checked,
       excludedDomains
     });
     showSavedBanner();
@@ -83,6 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   modeSelect.addEventListener("change", saveSettings);
+  gpcCheckbox.addEventListener("change", saveSettings);
   addDomainBtn.addEventListener("click", addDomain);
   newDomainInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") addDomain();

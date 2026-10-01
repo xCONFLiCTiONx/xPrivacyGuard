@@ -59,8 +59,60 @@ async function doSyncContentScripts() {
       }
     }
   }
+}
 
-  console.log("xPrivacyGuard Desktop: Content script registered/updated with excludeMatches:", excludePatterns);
+// GPC State Synchronization
+let gpcSyncPromise = Promise.resolve();
+
+function syncGpcState(enabled) {
+  gpcSyncPromise = gpcSyncPromise.then(async () => {
+    try {
+      if (enabled) {
+        await chrome.declarativeNetRequest.updateEnabledRulesets({
+          enableRulesetIds: ['gpc_rules']
+        });
+      } else {
+        await chrome.declarativeNetRequest.updateEnabledRulesets({
+          disableRulesetIds: ['gpc_rules']
+        });
+      }
+    } catch (e) {
+      console.error('Error updating GPC ruleset:', e);
+    }
+
+    try {
+      const scriptId = 'gpc-main-world';
+      try {
+        await chrome.scripting.unregisterContentScripts({ ids: [scriptId] });
+      } catch (e) {}
+
+      if (enabled) {
+        await chrome.scripting.registerContentScripts([{
+          id: scriptId,
+          matches: ['<all_urls>', 'file:///*'],
+          js: ['gpc.js'],
+          runAt: 'document_start',
+          world: 'MAIN',
+          allFrames: true
+        }]);
+      }
+    } catch (e) {
+      console.error('Error registering GPC content script:', e);
+    }
+  }).catch((err) => {
+    console.error('GPC sync error:', err);
+  });
+  return gpcSyncPromise;
+}
+
+function initGpc() {
+  chrome.storage.local.get(['enableGPC'], (res) => {
+    const enabled = res.enableGPC !== false;
+    if (res.enableGPC === undefined) {
+      chrome.storage.local.set({ enableGPC: true });
+    }
+    syncGpcState(enabled);
+  });
 }
 
 // Adaptive Icon Rendering
@@ -110,16 +162,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 chrome.runtime.onInstalled.addListener(() => {
   syncContentScripts();
+  initGpc();
 });
 
 chrome.runtime.onStartup.addListener(() => {
   syncContentScripts();
+  initGpc();
 });
 
 chrome.storage.onChanged.addListener((changes, namespace) => {
-  if (namespace === "local" && changes.excludedDomains) {
-    syncContentScripts();
+  if (namespace === "local") {
+    if (changes.excludedDomains) {
+      syncContentScripts();
+    }
+    if (changes.enableGPC) {
+      syncGpcState(changes.enableGPC.newValue !== false);
+    }
   }
 });
 
 syncContentScripts();
+initGpc();

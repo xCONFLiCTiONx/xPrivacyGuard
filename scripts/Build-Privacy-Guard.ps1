@@ -3,7 +3,7 @@
     Builds both Desktop and Mobile target packages for xPrivacyGuard from a single source repository.
 .DESCRIPTION
     Copies common, desktop-specific, and mobile-specific modules into build/desktop and build/mobile
-    along with their respective manifests and icon assets.
+    along with their respective manifests, rules.json, and icon assets.
 #>
 
 param(
@@ -20,7 +20,6 @@ $Root = Resolve-Path "$PSScriptRoot\.."
 $DesktopBuild = "$Root\$OutputDir\desktop"
 $MobileBuild = "$Root\$OutputDir\mobile"
 
-# Clean build output directories
 if (Test-Path $DesktopBuild) { Remove-Item -Recurse -Force $DesktopBuild }
 if (Test-Path $MobileBuild) { Remove-Item -Recurse -Force $MobileBuild }
 
@@ -33,6 +32,9 @@ New-Item -ItemType Directory -Force -Path $MobileBuild | Out-Null
 Write-Host "[1/2] Building Desktop target..." -ForegroundColor Yellow
 Copy-Item -Recurse -Force "$Root\src\desktop\*" $DesktopBuild
 Copy-Item -Recurse -Force "$Root\src\common\*" $DesktopBuild
+if (Test-Path "$Root\rules.json") {
+    Copy-Item -Force "$Root\rules.json" "$DesktopBuild\rules.json"
+}
 if (Test-Path "$Root\icons") {
     New-Item -ItemType Directory -Force -Path "$DesktopBuild\icons" | Out-Null
     Copy-Item -Recurse -Force "$Root\icons\*" "$DesktopBuild\icons"
@@ -46,6 +48,11 @@ Write-Host "-> Desktop build ready at $DesktopBuild" -ForegroundColor Green
 Write-Host "[2/2] Building Mobile target..." -ForegroundColor Yellow
 Copy-Item -Recurse -Force "$Root\src\mobile\*" $MobileBuild
 Copy-Item -Recurse -Force "$Root\src\common\*" $MobileBuild
+if (Test-Path "$Root\src\mobile\rules.json") {
+    Copy-Item -Force "$Root\src\mobile\rules.json" "$MobileBuild\rules.json"
+} elseif (Test-Path "$Root\rules.json") {
+    Copy-Item -Force "$Root\rules.json" "$MobileBuild\rules.json"
+}
 if (Test-Path "$Root\icons") {
     New-Item -ItemType Directory -Force -Path "$MobileBuild\icons" | Out-Null
     Copy-Item -Recurse -Force "$Root\icons\*" "$MobileBuild\icons"
