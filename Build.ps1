@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
-    Builds and packages xPrivacyGuard (Mobile / Edge Canary) into a signed .crx package.
+    Builds and packages xPrivacyGuard into a signed .crx package.
 .DESCRIPTION
-    1. Prepares extension assets in the build folder (or root).
+    1. Prepares extension assets in build folders.
     2. Uses Microsoft Edge or Google Chrome command-line packing (--pack-extension).
     3. Uses the secure private key stored at C:\Users\Michael\.xconflictionx\xPrivacyGuard\xPrivacyGuard-Mobile.pem.
     4. Outputs xPrivacyGuard-Mobile.crx in the root directory.
@@ -25,7 +25,6 @@ Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host " Building & Packaging xPrivacyGuard      " -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 
-# 1. Run internal build copy to mobile build folder
 $DesktopBuild = Join-Path $Root "build\desktop"
 if (Test-Path $DesktopBuild) { Remove-Item -Recurse -Force $DesktopBuild }
 if (Test-Path $MobileBuild) { Remove-Item -Recurse -Force $MobileBuild }
@@ -33,7 +32,6 @@ if (Test-Path $MobileBuild) { Remove-Item -Recurse -Force $MobileBuild }
 New-Item -ItemType Directory -Force -Path $DesktopBuild | Out-Null
 New-Item -ItemType Directory -Force -Path $MobileBuild | Out-Null
 
-# Copy desktop assets
 Copy-Item -Recurse -Force "$Root\src\desktop\*" $DesktopBuild
 Copy-Item -Recurse -Force "$Root\src\common\*" $DesktopBuild
 if (Test-Path "$Root\rules.json") { Copy-Item -Force "$Root\rules.json" "$DesktopBuild\rules.json" }
@@ -43,7 +41,6 @@ if (Test-Path "$Root\icons") {
 }
 Copy-Item -Force "$Root\manifest.desktop.json" "$DesktopBuild\manifest.json"
 
-# Copy mobile assets
 Copy-Item -Recurse -Force "$Root\src\mobile\*" $MobileBuild
 Copy-Item -Recurse -Force "$Root\src\common\*" $MobileBuild
 if (Test-Path "$Root\src\mobile\rules.json") {
@@ -57,12 +54,11 @@ if (Test-Path "$Root\icons") {
 }
 Copy-Item -Force "$Root\manifest.mobile.json" "$MobileBuild\manifest.json"
 
-# 2. Find Edge or Chrome executable
 $BrowserPaths = @(
     "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
     "C:\Program Files\Microsoft\Edge\Application\msedge.exe",
     "C:\Program Files\Google\Chrome\Application\chrome.exe",
-    "C:\Program Files(x86)\Google\Chrome\Application\chrome.exe"
+    "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
 )
 
 $BrowserExe = $null

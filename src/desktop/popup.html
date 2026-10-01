@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>xPrivacyGuard Desktop</title>
+    <title>xPrivacyGuard</title>
     <style>
       * { box-sizing: border-box; }
       body {
@@ -14,7 +14,9 @@
         display: flex; align-items: center; justify-content: space-between;
         margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #334155;
       }
-      .header h1 { margin: 0; font-size: 18px; font-weight: 700; color: #f8fafc; }
+      .brand { display: flex; align-items: center; gap: 10px; }
+      .brand img { width: 28px; height: 28px; border-radius: 6px; }
+      .header h1 { margin: 0; font-size: 17px; font-weight: 700; color: #f8fafc; }
       .header span { font-size: 11px; background: #334155; color: #cbd5e1; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
       .card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px; margin-bottom: 14px; }
       .card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; margin-bottom: 6px; }
@@ -44,7 +46,10 @@
   </head>
   <body>
     <div class="header">
-      <h1>xPrivacyGuard</h1>
+      <div class="brand">
+        <img src="../icons/icon32.png" alt="xPrivacyGuard Logo">
+        <h1>xPrivacyGuard</h1>
+      </div>
       <span>Desktop</span>
     </div>
     <div class="card">

@@ -23,9 +23,19 @@
         padding-bottom: 10px;
         border-bottom: 1px solid #334155;
       }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .brand img {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+      }
       .header h1 {
         margin: 0;
-        font-size: 18px;
+        font-size: 17px;
         font-weight: 700;
         color: #f8fafc;
       }
@@ -241,7 +251,10 @@
   </head>
   <body>
     <div class="header">
-      <h1>xPrivacyGuard</h1>
+      <div class="brand">
+        <img src="icons/icon32.png" alt="xPrivacyGuard Logo">
+        <h1>xPrivacyGuard</h1>
+      </div>
       <span>v2.0</span>
     </div>
 
