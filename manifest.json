@@ -9,7 +9,8 @@
     "scripting"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "<all_urls>",
+    "file:///*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -28,7 +29,8 @@
   "content_scripts": [
     {
       "matches": [
-        "<all_urls>"
+        "<all_urls>",
+        "file:///*"
       ],
       "js": [
         "renderIcon.js"

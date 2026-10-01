@@ -32,7 +32,7 @@ async function doSyncContentScripts() {
 
   const scriptConfig = {
     id: "xPrivacyGuard-inject",
-    matches: ["<all_urls>"],
+    matches: ["<all_urls>", "file:///*"],
     js: ["inject.js"],
     runAt: "document_start",
     world: "MAIN"
