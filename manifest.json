@@ -3,18 +3,20 @@
   "name": "xPrivacyGuard",
   "version": "2.0.0",
   "description": "Advanced browser fingerprint and tracking surface protection.",
-  "permissions": ["storage"],
-  "host_permissions": ["<all_urls>"],
-  "options_page": "settings.html",
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["inject.js"],
-      "run_at": "document_start",
-      "world": "MAIN"
-    }
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
   ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_page": "settings.html",
   "action": {
+    "default_popup": "popup.html",
     "default_title": "xPrivacyGuard"
   }
 }
