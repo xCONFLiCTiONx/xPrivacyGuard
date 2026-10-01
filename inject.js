@@ -3,9 +3,6 @@
 
   console.log("xPrivacyGuard active - Canvas, WebGL & Audio protection enabled");
 
-  //
-  // 1. Canvas Fingerprint Protection (Micro-Noise Randomization)
-  //
   const getRandomNoise = () => Math.floor(Math.random() * 256);
 
   const applyCanvasNoise = (canvas) => {
@@ -19,7 +16,7 @@
       const imgData = ctx.getImageData(x, y, 1, 1);
       if (imgData && imgData.data && imgData.data.length >= 4) {
         imgData.data[0] = getRandomNoise();
-        imgData.data[3] = 255; // Ensure non-transparent alpha so PNG encoding captures noise
+        imgData.data[3] = 255;
         ctx.putImageData(imgData, x, y);
       }
     } catch (e) {}
@@ -49,16 +46,19 @@
     return imageData;
   };
 
-  //
-  // 2. WebGL Telemetry & Vendor Masking
-  //
   const maskWebGL = (targetContext) => {
     if (!targetContext || !targetContext.prototype) return;
 
     const oldGetParameter = targetContext.prototype.getParameter;
     targetContext.prototype.getParameter = function (parameter) {
-      // 37445 = UNMASKED_VENDOR_WEBGL, 37446 = UNMASKED_RENDERER_WEBGL
-      if (parameter === 37445 || parameter === 37446) {
+      if (
+        parameter === 37445 ||
+        parameter === 37446 ||
+        parameter === 0x9245 ||
+        parameter === 0x9246 ||
+        parameter === 0x3745 ||
+        parameter === 0x3746
+      ) {
         return "PROTECTED";
       }
       return oldGetParameter.call(this, parameter);
@@ -81,9 +81,6 @@
     if (window.WebGL2RenderingContext) maskWebGL(WebGL2RenderingContext);
   } catch (e) {}
 
-  //
-  // 3. Audio Context Blocking / Protection
-  //
   try {
     Object.defineProperty(window, "OfflineAudioContext", {
       configurable: true,

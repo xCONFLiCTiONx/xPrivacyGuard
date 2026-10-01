@@ -64,7 +64,14 @@ export function applyFingerprintShields() {
       if (!targetContext || !targetContext.prototype) return;
       const oldGetParameter = targetContext.prototype.getParameter;
       targetContext.prototype.getParameter = function (parameter) {
-        if (parameter === 37445 || parameter === 37446 || parameter === 0x3745 || parameter === 0x3746) {
+        if (
+          parameter === 37445 ||
+          parameter === 37446 ||
+          parameter === 0x9245 ||
+          parameter === 0x9246 ||
+          parameter === 0x3745 ||
+          parameter === 0x3746
+        ) {
           return "PROTECTED";
         }
         return oldGetParameter.call(this, parameter);
@@ -83,6 +90,23 @@ export function applyFingerprintShields() {
 
     if (window.WebGLRenderingContext) maskWebGL(WebGLRenderingContext);
     if (window.WebGL2RenderingContext) maskWebGL(WebGL2RenderingContext);
+
+    // 4. AudioContext Protection
+    try {
+      Object.defineProperty(window, "OfflineAudioContext", {
+        configurable: true,
+        get() {
+          return undefined;
+        },
+      });
+
+      Object.defineProperty(window, "webkitOfflineAudioContext", {
+        configurable: true,
+        get() {
+          return undefined;
+        },
+      });
+    } catch (e) {}
 
   } catch (e) {}
 }

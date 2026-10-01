@@ -51,7 +51,14 @@
 
     const oldGetParameter = targetContext.prototype.getParameter;
     targetContext.prototype.getParameter = function (parameter) {
-      if (parameter === 37445 || parameter === 37446) {
+      if (
+        parameter === 37445 ||
+        parameter === 37446 ||
+        parameter === 0x9245 ||
+        parameter === 0x9246 ||
+        parameter === 0x3745 ||
+        parameter === 0x3746
+      ) {
         return "PROTECTED";
       }
       return oldGetParameter.call(this, parameter);
