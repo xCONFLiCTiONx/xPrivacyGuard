@@ -14,6 +14,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   let isWebPage = false;
   let excludedDomains = [];
 
+  // Sync icon theme on popup open
+  try {
+    const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    chrome.runtime.sendMessage({ action: "updateIcon", isDarkMode });
+  } catch (e) {}
+
   function cleanDomain(input) {
     if (!input) return "";
     let str = input.trim().toLowerCase();
