@@ -6,35 +6,34 @@
   //
   // 1. Canvas Fingerprint Protection (Micro-Noise Randomization)
   //
-  const noise = () => (Math.random() < 0.5 ? 1 : -1);
+  const getRandomNoise = () => Math.floor(Math.random() * 256);
+
+  const applyCanvasNoise = (canvas) => {
+    try {
+      if (!canvas || canvas.width <= 0 || canvas.height <= 0) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const x = Math.min(10, canvas.width - 1);
+      const y = Math.min(10, canvas.height - 1);
+      const imgData = ctx.getImageData(x, y, 1, 1);
+      if (imgData && imgData.data && imgData.data.length >= 4) {
+        imgData.data[0] = getRandomNoise();
+        imgData.data[3] = 255; // Ensure non-transparent alpha so PNG encoding captures noise
+        ctx.putImageData(imgData, x, y);
+      }
+    } catch (e) {}
+  };
 
   const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
   HTMLCanvasElement.prototype.toDataURL = function (...args) {
-    try {
-      const ctx = this.getContext("2d");
-      if (ctx && this.width > 0 && this.height > 0) {
-        const imgData = ctx.getImageData(0, 0, Math.min(this.width, 10), Math.min(this.height, 10));
-        if (imgData && imgData.data.length >= 4) {
-          imgData.data[0] = (imgData.data[0] + noise() + 256) % 256;
-          ctx.putImageData(imgData, 0, 0);
-        }
-      }
-    } catch (e) {}
+    applyCanvasNoise(this);
     return originalToDataURL.apply(this, args);
   };
 
   const originalToBlob = HTMLCanvasElement.prototype.toBlob;
   HTMLCanvasElement.prototype.toBlob = function (callback, ...args) {
-    try {
-      const ctx = this.getContext("2d");
-      if (ctx && this.width > 0 && this.height > 0) {
-        const imgData = ctx.getImageData(0, 0, Math.min(this.width, 10), Math.min(this.height, 10));
-        if (imgData && imgData.data.length >= 4) {
-          imgData.data[0] = (imgData.data[0] + noise() + 256) % 256;
-          ctx.putImageData(imgData, 0, 0);
-        }
-      }
-    } catch (e) {}
+    applyCanvasNoise(this);
     return originalToBlob.apply(this, [callback, ...args]);
   };
 
@@ -43,9 +42,8 @@
     const imageData = originalGetImageData.call(this, x, y, w, h, ...args);
     try {
       if (imageData && imageData.data && imageData.data.length >= 4) {
-        for (let i = 0; i < Math.min(imageData.data.length, 16); i += 4) {
-          imageData.data[i] = (imageData.data[i] + noise() + 256) % 256;
-        }
+        imageData.data[0] = getRandomNoise();
+        imageData.data[3] = 255;
       }
     } catch (e) {}
     return imageData;
