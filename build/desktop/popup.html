@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>xPrivacyGuard Desktop</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        margin: 0; padding: 16px; width: 320px;
+        background-color: #0f172a; color: #f1f5f9;
+      }
+      .header {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #334155;
+      }
+      .header h1 { margin: 0; font-size: 18px; font-weight: 700; color: #f8fafc; }
+      .header span { font-size: 11px; background: #334155; color: #cbd5e1; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+      .card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px; margin-bottom: 14px; }
+      .card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; margin-bottom: 6px; }
+      .domain-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+      .domain-name { font-size: 14px; font-weight: 600; color: #f8fafc; word-break: break-all; }
+      .badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 12px; white-space: nowrap; }
+      .badge-protected { background: #064e3b; color: #6ee7b7; }
+      .badge-excluded { background: #78350f; color: #fde68a; }
+      .badge-disabled { background: #334155; color: #cbd5e1; }
+      button { cursor: pointer; font-family: inherit; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; padding: 8px 12px; width: 100%; }
+      .btn-primary { background-color: #2563eb; color: white; }
+      .btn-warning { background-color: #d97706; color: white; }
+      .btn-secondary { background-color: #334155; color: #f1f5f9; }
+      .reload-notice { font-size: 11px; color: #94a3b8; margin-top: 6px; text-align: center; }
+      .section-label { font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; display: block; }
+      select { width: 100%; padding: 6px 10px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; font-size: 13px; color: #f1f5f9; margin-bottom: 12px; }
+      .domain-list { max-height: 120px; overflow-y: auto; margin-bottom: 8px; }
+      .domain-item { display: flex; align-items: center; justify-content: space-between; background: #1e293b; border: 1px solid #334155; padding: 6px 10px; border-radius: 4px; margin-bottom: 4px; font-size: 12px; word-break: break-all; }
+      .domain-item .remove-btn { background: none; border: none; color: #f87171; font-weight: bold; cursor: pointer; padding: 0 4px; width: auto; }
+      .add-domain-box { display: flex; gap: 6px; }
+      .add-domain-box input { flex: 1; padding: 6px 8px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #f1f5f9; font-size: 12px; }
+      .add-domain-box button { width: auto; padding: 6px 12px; font-size: 12px; }
+      .empty-state { font-size: 11px; color: #64748b; font-style: italic; padding: 4px 0; }
+      .footer { margin-top: 14px; text-align: center; border-top: 1px solid #334155; padding-top: 10px; }
+      .footer a { color: #60a5fa; text-decoration: none; font-size: 12px; font-weight: 500; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>xPrivacyGuard</h1>
+      <span>Desktop</span>
+    </div>
+    <div class="card">
+      <div class="card-title">Current Site</div>
+      <div class="domain-row">
+        <span class="domain-name" id="current-domain">Detecting...</span>
+        <span class="badge badge-disabled" id="status-badge">-</span>
+      </div>
+      <button id="toggle-exclude-btn" disabled>Detecting tab...</button>
+      <div class="reload-notice">Page will reload automatically when toggled</div>
+    </div>
+    <label for="mode-select" class="section-label">Protection Mode</label>
+    <select id="mode-select">
+      <option value="normal">Normal Mode</option>
+      <option value="strict">Strict Mode</option>
+    </select>
+    <label for="new-domain-input" class="section-label">Excluded Sites (<span id="excluded-count">0</span>)</label>
+    <div class="domain-list" id="excluded-list">
+      <div class="empty-state">No excluded sites yet</div>
+    </div>
+    <div class="add-domain-box">
+      <input type="text" id="new-domain-input" placeholder="e.g. example.com" />
+      <button class="btn-secondary" id="add-domain-btn">Add</button>
+    </div>
+    <div class="footer">
+      <a href="#" id="open-options-link">Open Full Options</a>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>
