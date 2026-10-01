@@ -1,35 +1,46 @@
-xPrivacyGuard  
-=============
+xPrivacyGuard v2  
+================
 
-Chrome Manifest V3 privacy extension.
+Browser fingerprint protection.
 
-Features:
+Modes:
 
-- Canvas fingerprint reduction
-- WebGL fingerprint masking
-- Audio fingerprint reduction
+NORMAL
+
+- Canvas protection
+- WebGL masking
+- Audio noise
 - Navigator normalization
 
-Installation:
+STRICT
 
-1. Extract folder
-2. Open Chrome
-3. Go to:
+Everything above plus:
+
+- AudioContext blocking
+- WebRTC blocking
+- Battery API blocking
+- Gamepad blocking
+- Sensor blocking
+
+Install:
+
+1. Open:
 
 chrome://extensions
 
-4. Enable Developer Mode
-5. Select "Load unpacked"
-6. Select xPrivacyGuard folder
+2. Enable Developer Mode
 
-Limitations:
+3. Load unpacked
 
-This does NOT hide:
+4. Select xPrivacyGuard folder
 
-- IP address
+Notes:
+
+This protects JavaScript fingerprinting.
+
+It does not change:
+
 - TLS fingerprint
 - TCP fingerprint
-- Network fingerprint
+- IP address
 - Browser engine fingerprint
-
-The goal is reducing JavaScript fingerprint uniqueness.
