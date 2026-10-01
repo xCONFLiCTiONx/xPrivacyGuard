@@ -12,8 +12,8 @@
         margin: 0;
         padding: 16px;
         width: 320px;
-        background-color: #f8fafc;
-        color: #1e293b;
+        background-color: #0f172a;
+        color: #f1f5f9;
       }
       .header {
         display: flex;
@@ -21,30 +21,30 @@
         justify-content: space-between;
         margin-bottom: 14px;
         padding-bottom: 10px;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid #334155;
       }
       .header h1 {
         margin: 0;
         font-size: 18px;
         font-weight: 700;
-        color: #0f172a;
+        color: #f8fafc;
       }
       .header span {
         font-size: 11px;
-        background: #e2e8f0;
-        color: #475569;
+        background: #334155;
+        color: #cbd5e1;
         padding: 2px 6px;
         border-radius: 4px;
         font-weight: 600;
       }
 
       .card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
+        background: #1e293b;
+        border: 1px solid #334155;
         border-radius: 8px;
         padding: 12px;
         margin-bottom: 14px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
       }
 
       .card-title {
@@ -52,7 +52,7 @@
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        color: #64748b;
+        color: #94a3b8;
         margin-bottom: 6px;
       }
 
@@ -67,7 +67,7 @@
       .domain-name {
         font-size: 14px;
         font-weight: 600;
-        color: #0f172a;
+        color: #f8fafc;
         word-break: break-all;
       }
 
@@ -79,16 +79,16 @@
         white-space: nowrap;
       }
       .badge-protected {
-        background: #d1fae5;
-        color: #065f46;
+        background: #064e3b;
+        color: #6ee7b7;
       }
       .badge-excluded {
-        background: #fef3c7;
-        color: #92400e;
+        background: #78350f;
+        color: #fde68a;
       }
       .badge-disabled {
-        background: #f1f5f9;
-        color: #64748b;
+        background: #334155;
+        color: #cbd5e1;
       }
 
       button {
@@ -112,24 +112,24 @@
       }
 
       .btn-warning {
-        background-color: #f59e0b;
+        background-color: #d97706;
         color: white;
       }
       .btn-warning:hover {
-        background-color: #d97706;
+        background-color: #b45309;
       }
 
       .btn-secondary {
-        background-color: #e2e8f0;
-        color: #334155;
+        background-color: #334155;
+        color: #f1f5f9;
       }
       .btn-secondary:hover {
-        background-color: #cbd5e1;
+        background-color: #475569;
       }
 
       .reload-notice {
         font-size: 11px;
-        color: #64748b;
+        color: #94a3b8;
         margin-top: 6px;
         text-align: center;
       }
@@ -137,7 +137,7 @@
       .section-label {
         font-size: 12px;
         font-weight: 600;
-        color: #475569;
+        color: #cbd5e1;
         margin-bottom: 6px;
         display: block;
       }
@@ -146,11 +146,11 @@
         width: 100%;
         padding: 6px 10px;
         border-radius: 6px;
-        border: 1px solid #cbd5e1;
-        background: white;
+        border: 1px solid #334155;
+        background: #1e293b;
         font-family: inherit;
         font-size: 13px;
-        color: #1e293b;
+        color: #f1f5f9;
         margin-bottom: 12px;
       }
 
@@ -164,18 +164,20 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: #f1f5f9;
+        background: #1e293b;
+        border: 1px solid #334155;
         padding: 6px 10px;
         border-radius: 4px;
         margin-bottom: 4px;
         font-size: 12px;
         word-break: break-all;
+        color: #f1f5f9;
       }
 
       .domain-item .remove-btn {
         background: none;
         border: none;
-        color: #ef4444;
+        color: #f87171;
         font-weight: bold;
         font-size: 14px;
         cursor: pointer;
@@ -184,7 +186,7 @@
         margin-left: 8px;
       }
       .domain-item .remove-btn:hover {
-        color: #dc2626;
+        color: #ef4444;
       }
 
       .add-domain-box {
@@ -196,8 +198,14 @@
         flex: 1;
         padding: 6px 8px;
         border-radius: 6px;
-        border: 1px solid #cbd5e1;
+        border: 1px solid #334155;
+        background: #1e293b;
+        color: #f1f5f9;
         font-size: 12px;
+      }
+
+      .add-domain-box input::placeholder {
+        color: #64748b;
       }
 
       .add-domain-box button {
@@ -208,7 +216,7 @@
 
       .empty-state {
         font-size: 11px;
-        color: #94a3b8;
+        color: #64748b;
         font-style: italic;
         padding: 4px 0;
       }
@@ -216,12 +224,12 @@
       .footer {
         margin-top: 14px;
         text-align: center;
-        border-top: 1px solid #e2e8f0;
+        border-top: 1px solid #334155;
         padding-top: 10px;
       }
 
       .footer a {
-        color: #2563eb;
+        color: #60a5fa;
         text-decoration: none;
         font-size: 12px;
         font-weight: 500;
