@@ -1,59 +1,79 @@
-xPrivacyGuard v2  
-================
+# xPrivacyGuard
 
-Browser fingerprint protection.
+> **Advanced Browser Fingerprint & Tracking Surface Protection**
 
-Features:
+**xPrivacyGuard** is a lightweight, high-performance Chrome Extension (Manifest V3) designed to prevent invasive browser fingerprinting and client-side tracking vectors while providing effortless domain management for interactive web applications.
 
-- Domain Exclusion: Easily disable protection for trusted sites (e.g., interactive canvas tools, portfolio image tools) directly from the toolbar extension popup.
-- Automatic Tab Refresh: Toggling exclusion automatically reloads the active tab so the page works immediately.
-- Protection Modes: Normal and Strict modes.
+---
 
-Modes:
+## 🌟 Key Features
 
-NORMAL
+* **Instant Site Exclusion**: Easily exclude trusted domains (such as interactive image editors, web canvas applications, or portfolio tools) directly from the extension popup.
+* **Automatic Tab Refresh**: Automatically reloads active tabs when toggling site exclusion so pages resume full functionality immediately.
+* **Adaptive Contrast Icon**: Dynamically detects system/browser theme (`prefers-color-scheme`) to render high-contrast toolbar icons (white icon on dark themes, black icon on light themes).
+* **Dual Protection Profiles**: Switch seamlessly between **Normal** and **Strict** protection levels.
+* **Modern Dark Interface**: Sleek, accessible dark-themed user interface for both the extension popup and options page.
 
-- Canvas protection
-- WebGL masking
-- Audio noise
-- Navigator normalization
+---
 
-STRICT
+## 🛡️ Protection Profiles
 
-Everything above plus:
+### **Normal Mode** (Recommended)
+Balanced protection against common tracking scripts while maintaining site compatibility:
+* **Canvas Protection**: Overrides `toDataURL`, `toBlob`, and `getImageData` fingerprinting attempts.
+* **WebGL Masking**: Normalizes graphics renderer and vendor telemetry parameters.
+* **Audio Noise**: Prevents background audio spectrum analysis fingerprinting.
+* **Navigator Normalization**: Masks client platform details.
 
-- AudioContext blocking
-- WebRTC blocking
-- Battery API blocking
-- Gamepad blocking
-- Sensor blocking
+### **Strict Mode**
+Maximum hardening for high-privacy sessions:
+* Includes all **Normal Mode** protections.
+* **AudioContext Hardening**: Blocks `OfflineAudioContext` enumeration.
+* **WebRTC Protection**: Minimizes local IP leak vectors.
+* **Sensor & Hardware API Guard**: Blocks Battery API, Gamepad API, and Sensor API tracking surfaces.
 
-Domain Exclusion:
+---
 
-1. Click the xPrivacyGuard icon in the browser toolbar when visiting a website.
-2. Click "Exclude [domain]" to disable protection for that site.
-3. The page will reload automatically and run without xPrivacyGuard blocking canvas/audio/WebGL.
-4. Re-enable protection at any time from the popup or Options page.
+## ⚡ Domain Exclusion Workflow
 
-Install:
+When visiting complex web applications that rely heavily on Canvas or AudioContext APIs (such as image tools or audio editors):
 
-1. Open:
+1. Click the **xPrivacyGuard** icon in your browser toolbar.
+2. Click **Exclude [domain]** (e.g. `portfolio.com`).
+3. The active tab will automatically reload with protection safely bypassed for that domain.
+4. Re-enable protection at any time with a single click from the popup or Options page.
 
-chrome://extensions
+---
 
-2. Enable Developer Mode
+## 🚀 Installation
 
-3. Load unpacked
+1. Clone or download this repository to your local machine.
+2. Open Chrome and navigate to `chrome://extensions`.
+3. Enable **Developer mode** using the toggle in the top-right corner.
+4. Click **Load unpacked** and select the `xPrivacyGuard` folder.
+5. Pin **xPrivacyGuard** to your browser toolbar for easy access.
 
-4. Select xPrivacyGuard folder
+---
 
-Notes:
+## ℹ️ Technical Notes & Scope
 
-This protects JavaScript fingerprinting.
+* **Client-Side Scope**: xPrivacyGuard specifically targets JavaScript-based browser fingerprinting and telemetry surface APIs.
+* **Network Privacy**: To hide IP addresses, TCP/TLS fingerprints, or location telemetry, pair xPrivacyGuard with a trusted VPN or proxy service.
 
-It does not change:
+---
 
-- TLS fingerprint
-- TCP fingerprint
-- IP address
-- Browser engine fingerprint
+## 📁 Repository Structure
+
+```
+xPrivacyGuard/
+├── manifest.json      # Extension Manifest V3 configuration
+├── background.js      # Dynamic scripting manager & icon renderer
+├── inject.js          # Main-world fingerprint protection script
+├── renderIcon.js      # System theme detection script
+├── popup.html         # Extension toolbar popup interface
+├── popup.js           # Popup controller & tab detection
+├── settings.html      # Extension options page
+├── settings.js        # Options page settings manager
+├── icon.svg           # Scalable vector extension icon
+└── README.md          # Documentation
+```
