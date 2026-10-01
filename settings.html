@@ -4,161 +4,30 @@
     <meta charset="utf-8" />
     <title>xPrivacyGuard Options</title>
     <style>
-      * {
-        box-sizing: border-box;
-      }
+      * { box-sizing: border-box; }
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        padding: 24px;
-        max-width: 500px;
-        margin: 0 auto;
-        background-color: #0f172a;
-        color: #f1f5f9;
+        padding: 24px; max-width: 500px; margin: 0 auto;
+        background-color: #0f172a; color: #f1f5f9;
       }
-
-      h1 {
-        font-size: 22px;
-        margin-top: 0;
-        color: #f8fafc;
-        margin-bottom: 20px;
-        border-bottom: 2px solid #334155;
-        padding-bottom: 10px;
-      }
-
-      .card {
-        background: #1e293b;
-        border: 1px solid #334155;
-        border-radius: 8px;
-        padding: 16px;
-        margin-bottom: 20px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-      }
-
-      .card h2 {
-        font-size: 15px;
-        margin-top: 0;
-        margin-bottom: 12px;
-        color: #f1f5f9;
-      }
-
-      label {
-        font-size: 13px;
-        font-weight: 600;
-        color: #cbd5e1;
-        display: block;
-        margin-bottom: 6px;
-      }
-
-      select {
-        width: 100%;
-        padding: 8px 12px;
-        border-radius: 6px;
-        border: 1px solid #334155;
-        font-size: 14px;
-        margin-bottom: 12px;
-        background: #0f172a;
-        color: #f1f5f9;
-      }
-
-      .domain-list {
-        max-height: 200px;
-        overflow-y: auto;
-        margin-bottom: 12px;
-        border: 1px solid #334155;
-        border-radius: 6px;
-        padding: 6px;
-        background: #0f172a;
-      }
-
-      .domain-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: #1e293b;
-        padding: 8px 12px;
-        border-radius: 4px;
-        margin-bottom: 4px;
-        font-size: 13px;
-        border: 1px solid #334155;
-        color: #f1f5f9;
-      }
-
-      .domain-item:last-child {
-        margin-bottom: 0;
-      }
-
-      .remove-btn {
-        background: none;
-        border: none;
-        color: #f87171;
-        font-weight: bold;
-        font-size: 16px;
-        cursor: pointer;
-        padding: 0 6px;
-      }
-      .remove-btn:hover {
-        color: #ef4444;
-      }
-
-      .add-box {
-        display: flex;
-        gap: 8px;
-      }
-
-      .add-box input {
-        flex: 1;
-        padding: 8px 12px;
-        border-radius: 6px;
-        border: 1px solid #334155;
-        background: #0f172a;
-        color: #f1f5f9;
-        font-size: 13px;
-      }
-
-      .add-box input::placeholder {
-        color: #64748b;
-      }
-
-      button.btn {
-        padding: 8px 16px;
-        border-radius: 6px;
-        border: 1px solid transparent;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        background-color: #2563eb;
-        color: white;
-      }
-      button.btn:hover {
-        background-color: #1d4ed8;
-      }
-
-      .empty-notice {
-        font-size: 12px;
-        color: #64748b;
-        font-style: italic;
-        padding: 8px;
-        text-align: center;
-      }
-
-      .saved-banner {
-        display: none;
-        background-color: #064e3b;
-        color: #a7f3d0;
-        padding: 10px 14px;
-        border-radius: 6px;
-        font-size: 13px;
-        font-weight: 600;
-        margin-bottom: 16px;
-      }
+      h1 { font-size: 22px; margin-top: 0; color: #f8fafc; margin-bottom: 20px; border-bottom: 2px solid #334155; padding-bottom: 10px; }
+      .card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+      .card h2 { font-size: 15px; margin-top: 0; margin-bottom: 12px; color: #f1f5f9; }
+      label { font-size: 13px; font-weight: 600; color: #cbd5e1; display: block; margin-bottom: 6px; }
+      select { width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #334155; font-size: 14px; margin-bottom: 12px; background: #0f172a; color: #f1f5f9; }
+      .domain-list { max-height: 200px; overflow-y: auto; margin-bottom: 12px; border: 1px solid #334155; border-radius: 6px; padding: 6px; background: #0f172a; }
+      .domain-item { display: flex; align-items: center; justify-content: space-between; background: #1e293b; padding: 8px 12px; border-radius: 4px; margin-bottom: 4px; font-size: 13px; border: 1px solid #334155; color: #f1f5f9; }
+      .remove-btn { background: none; border: none; color: #f87171; font-weight: bold; cursor: pointer; padding: 0 6px; }
+      .add-box { display: flex; gap: 8px; }
+      .add-box input { flex: 1; padding: 8px 12px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #f1f5f9; font-size: 13px; }
+      button.btn { padding: 8px 16px; border-radius: 6px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; background-color: #2563eb; color: white; }
+      .empty-notice { font-size: 12px; color: #64748b; font-style: italic; padding: 8px; text-align: center; }
+      .saved-banner { display: none; background-color: #064e3b; color: #a7f3d0; padding: 10px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; margin-bottom: 16px; }
     </style>
   </head>
   <body>
     <h1>xPrivacyGuard Options</h1>
-
     <div id="saved-banner" class="saved-banner">Settings saved successfully!</div>
-
-    <!-- Mode Section -->
     <div class="card">
       <h2>Protection Settings</h2>
       <label for="mode">Protection Mode</label>
@@ -166,26 +35,24 @@
         <option value="normal">Normal (Canvas, WebGL, Audio masking)</option>
         <option value="strict">Strict (Includes AudioContext blocking)</option>
       </select>
+      <label style="display: flex; align-items: center; gap: 8px; margin-top: 12px; cursor: pointer; color: #f1f5f9;">
+        <input type="checkbox" id="enableGPC" style="width: auto; margin: 0;"> Enable Global Privacy Control (GPC)
+      </label>
     </div>
-
-    <!-- Excluded Domains Section -->
     <div class="card">
       <h2>Excluded Domains</h2>
       <p style="font-size: 12px; color: #94a3b8; margin-top: 0; margin-bottom: 12px;">
-        xPrivacyGuard fingerprint protection is disabled on these domains. When visiting an excluded domain, pages (such as interactive image tools or web apps) will work normally.
+        xPrivacyGuard fingerprint protection is disabled on these domains.
       </p>
-
       <div class="domain-list" id="domain-list">
         <div class="empty-notice">No domains excluded</div>
       </div>
-
       <label for="new-domain-input">Add new domain to exclude</label>
       <div class="add-box">
         <input type="text" id="new-domain-input" placeholder="e.g. portfolio.com" />
         <button class="btn" id="add-domain-btn">Add Domain</button>
       </div>
     </div>
-
     <script src="settings.js"></script>
   </body>
 </html>

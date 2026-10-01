@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const modeSelect = document.getElementById("mode");
+  const gpcCheckbox = document.getElementById("enableGPC");
   const domainListEl = document.getElementById("domain-list");
   const newDomainInput = document.getElementById("new-domain-input");
   const addDomainBtn = document.getElementById("add-domain-btn");
@@ -35,16 +36,13 @@ document.addEventListener("DOMContentLoaded", () => {
     excludedDomains.forEach((domain) => {
       const itemDiv = document.createElement("div");
       itemDiv.className = "domain-item";
-
       const textSpan = document.createElement("span");
       textSpan.textContent = domain;
-
       const removeBtn = document.createElement("button");
       removeBtn.className = "remove-btn";
       removeBtn.textContent = "✕";
       removeBtn.title = `Remove ${domain}`;
       removeBtn.onclick = () => removeDomain(domain);
-
       itemDiv.appendChild(textSpan);
       itemDiv.appendChild(removeBtn);
       domainListEl.appendChild(itemDiv);
@@ -52,10 +50,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function loadSettings() {
-    const data = await chrome.storage.local.get(["mode", "excludedDomains"]);
+    const data = await chrome.storage.local.get(["mode", "enableGPC", "excludedDomains"]);
     if (data.mode) {
       modeSelect.value = data.mode;
     }
+    gpcCheckbox.checked = data.enableGPC !== false;
     excludedDomains = data.excludedDomains || [];
     renderDomains();
   }
@@ -63,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function saveSettings() {
     await chrome.storage.local.set({
       mode: modeSelect.value,
+      enableGPC: gpcCheckbox.checked,
       excludedDomains
     });
     showSavedBanner();
@@ -77,7 +77,6 @@ document.addEventListener("DOMContentLoaded", () => {
   async function addDomain() {
     const cleaned = cleanDomain(newDomainInput.value);
     if (!cleaned) return;
-
     if (!excludedDomains.includes(cleaned)) {
       excludedDomains.push(cleaned);
       newDomainInput.value = "";
@@ -87,6 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   modeSelect.addEventListener("change", saveSettings);
+  gpcCheckbox.addEventListener("change", saveSettings);
   addDomainBtn.addEventListener("click", addDomain);
   newDomainInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") addDomain();

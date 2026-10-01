@@ -1,4 +1,4 @@
-// background.js - Service worker for xPrivacyGuard
+// background.js - Service worker for xPrivacyGuard Desktop
 
 let syncQueue = Promise.resolve();
 
@@ -59,8 +59,60 @@ async function doSyncContentScripts() {
       }
     }
   }
+}
 
-  console.log("xPrivacyGuard: Content script registered/updated with excludeMatches:", excludePatterns);
+// GPC State Synchronization
+let gpcSyncPromise = Promise.resolve();
+
+function syncGpcState(enabled) {
+  gpcSyncPromise = gpcSyncPromise.then(async () => {
+    try {
+      if (enabled) {
+        await chrome.declarativeNetRequest.updateEnabledRulesets({
+          enableRulesetIds: ['gpc_rules']
+        });
+      } else {
+        await chrome.declarativeNetRequest.updateEnabledRulesets({
+          disableRulesetIds: ['gpc_rules']
+        });
+      }
+    } catch (e) {
+      console.error('Error updating GPC ruleset:', e);
+    }
+
+    try {
+      const scriptId = 'gpc-main-world';
+      try {
+        await chrome.scripting.unregisterContentScripts({ ids: [scriptId] });
+      } catch (e) {}
+
+      if (enabled) {
+        await chrome.scripting.registerContentScripts([{
+          id: scriptId,
+          matches: ['<all_urls>', 'file:///*'],
+          js: ['gpc.js'],
+          runAt: 'document_start',
+          world: 'MAIN',
+          allFrames: true
+        }]);
+      }
+    } catch (e) {
+      console.error('Error registering GPC content script:', e);
+    }
+  }).catch((err) => {
+    console.error('GPC sync error:', err);
+  });
+  return gpcSyncPromise;
+}
+
+function initGpc() {
+  chrome.storage.local.get(['enableGPC'], (res) => {
+    const enabled = res.enableGPC !== false;
+    if (res.enableGPC === undefined) {
+      chrome.storage.local.set({ enableGPC: true });
+    }
+    syncGpcState(enabled);
+  });
 }
 
 // Adaptive Icon Rendering
@@ -96,11 +148,10 @@ async function updateExtensionIcon(isDarkMode) {
       }
     });
   } catch (err) {
-    console.error("xPrivacyGuard: Failed to set extension icon:", err);
+    console.error("xPrivacyGuard Desktop: Failed to set extension icon:", err);
   }
 }
 
-// Message Listener for Adaptive Icon Theme
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message && message.action === "updateIcon") {
     updateExtensionIcon(message.isDarkMode);
@@ -109,22 +160,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// Sync on extension install or update
 chrome.runtime.onInstalled.addListener(() => {
   syncContentScripts();
+  initGpc();
 });
 
-// Sync on browser startup
 chrome.runtime.onStartup.addListener(() => {
   syncContentScripts();
+  initGpc();
 });
 
-// Sync when storage changes
 chrome.storage.onChanged.addListener((changes, namespace) => {
-  if (namespace === "local" && changes.excludedDomains) {
-    syncContentScripts();
+  if (namespace === "local") {
+    if (changes.excludedDomains) {
+      syncContentScripts();
+    }
+    if (changes.enableGPC) {
+      syncGpcState(changes.enableGPC.newValue !== false);
+    }
   }
 });
 
-// Initial sync on service worker load
 syncContentScripts();
+initGpc();
