@@ -1,36 +1,43 @@
-// background.js - xPrivacy Guard Mobile
-
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.get({
-    gpcEnabled: true,
-    dntEnabled: true,
-    cleanUrlsEnabled: true,
-    fingerprintShieldEnabled: true,
-    blockedCount: 0
-  }, (items) => {
-    chrome.storage.local.set(items);
-  });
-
-  try {
-    if (chrome.privacy && chrome.privacy.network && chrome.privacy.network.webRTCIPHandlingPolicy) {
-      chrome.privacy.network.webRTCIPHandlingPolicy.set({
-        value: 'default_public_interface_only'
-      });
+  chrome.storage.local.get(["gpcEnabled"], (result) => {
+    if (result.gpcEnabled === undefined) {
+      chrome.storage.local.set({ gpcEnabled: true });
     }
-  } catch (e) {
-    console.log('WebRTC privacy setting not available in this environment');
-  }
+  });
 });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'incrementBlockedCount') {
-    const increment = message.count || 1;
-    chrome.storage.local.get({ blockedCount: 0 }, (data) => {
-      const newCount = data.blockedCount + increment;
-      chrome.storage.local.set({ blockedCount: newCount }, () => {
-        sendResponse({ success: true, newCount });
-      });
+async function updateGPCRules(enabled) {
+  const ruleId = 1001;
+  if (enabled) {
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: [ruleId],
+      addRules: [
+        {
+          id: ruleId,
+          priority: 1,
+          action: {
+            type: "modifyHeaders",
+            requestHeaders: [
+              { header: "Sec-GPC", operation: "set", value: "1" },
+            ],
+          },
+          condition: {
+            urlFilter: "*",
+            resourceTypes: ["main_frame", "sub_frame"],
+          },
+        },
+      ],
     });
-    return true;
+  } else {
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: [ruleId],
+      addRules: [],
+    });
+  }
+}
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.gpcEnabled) {
+    updateGPCRules(changes.gpcEnabled.newValue);
   }
 });

@@ -1,26 +1,17 @@
-// gpc.js - Injected into MAIN world at document_start to enable GPC
-(function() {
-    'use strict';
-    try {
-        if (typeof Navigator !== 'undefined' && Navigator.prototype) {
-            Object.defineProperty(Navigator.prototype, 'globalPrivacyControl', {
-                get: function() { return true; },
-                configurable: true,
-                enumerable: true
-            });
-        }
-    } catch (e) {}
+(async function () {
+  chrome.storage.local.get(["gpcEnabled"], (result) => {
+    if (result.gpcEnabled === false) {
+      return;
+    }
 
     try {
-        if (typeof navigator !== 'undefined') {
-            if (!('globalPrivacyControl' in navigator) || navigator.globalPrivacyControl !== true) {
-                Object.defineProperty(navigator, 'globalPrivacyControl', {
-                    value: true,
-                    writable: false,
-                    configurable: true,
-                    enumerable: true
-                });
-            }
-        }
-    } catch (e) {}
+      Object.defineProperty(navigator, "globalPrivacyControl", {
+        get: () => true,
+        configurable: true,
+        enumerable: true,
+      });
+    } catch (e) {
+      // Fallback if property definition fails
+    }
+  });
 })();
