@@ -1,43 +1,38 @@
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.get(["gpcEnabled"], (result) => {
-    if (result.gpcEnabled === undefined) {
-      chrome.storage.local.set({ gpcEnabled: true });
+  chrome.storage.local.get(
+    ["gpcEnabled", "dntEnabled", "fingerprintShieldEnabled"],
+    (result) => {
+      const defaults = {
+        gpcEnabled: true,
+        dntEnabled: true,
+        fingerprintShieldEnabled: true,
+      };
+      const update = {};
+      for (const key in defaults) {
+        if (result[key] === undefined) {
+          update[key] = defaults[key];
+        }
+      }
+      if (Object.keys(update).length > 0) {
+        chrome.storage.local.set(update);
+      }
     }
-  });
+  );
 });
 
-async function updateGPCRules(enabled) {
-  const ruleId = 1001;
-  if (enabled) {
-    await chrome.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds: [ruleId],
-      addRules: [
-        {
-          id: ruleId,
-          priority: 1,
-          action: {
-            type: "modifyHeaders",
-            requestHeaders: [
-              { header: "Sec-GPC", operation: "set", value: "1" },
-            ],
-          },
-          condition: {
-            urlFilter: "*",
-            resourceTypes: ["main_frame", "sub_frame"],
-          },
-        },
-      ],
-    });
-  } else {
-    await chrome.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds: [ruleId],
-      addRules: [],
-    });
-  }
-}
-
-chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes.gpcEnabled) {
-    updateGPCRules(changes.gpcEnabled.newValue);
+// Listen for requests from content scripts running in MAIN world (where chrome.storage is unavailable)
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "getSettings") {
+    chrome.storage.local.get(
+      {
+        gpcEnabled: true,
+        dntEnabled: true,
+        fingerprintShieldEnabled: true,
+      },
+      (items) => {
+        sendResponse({ settings: items });
+      }
+    );
+    return true; // Keep message channel open for async sendResponse
   }
 });

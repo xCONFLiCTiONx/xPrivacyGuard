@@ -228,8 +228,7 @@
     injectIntoPage(settings);
   }
 
-  // Fix: When chrome.storage is unavailable in MAIN world, query the background script
-  // via runtime message instead of falling back blindly to true.
+  // Fetch settings from background script via runtime messaging since chrome.storage is blocked in MAIN world
   try {
     if (
       typeof chrome !== "undefined" &&
@@ -242,43 +241,23 @@
           if (response && response.settings) {
             run(response.settings);
           } else {
-            // Fallback if no response, but respect explicit false defaults
             run({
-              gpcEnabled: false,
+              gpcEnabled: true,
               dntEnabled: true,
               fingerprintShieldEnabled: true,
             });
           }
         }
       );
-    } else if (
-      typeof chrome !== "undefined" &&
-      chrome.storage &&
-      chrome.storage.local
-    ) {
-      chrome.storage.local.get(
-        {
-          gpcEnabled: true,
-          dntEnabled: true,
-          fingerprintShieldEnabled: true,
-        },
-        function (items) {
-          run(items);
-        }
-      );
     } else {
       run({
-        gpcEnabled: false,
+        gpcEnabled: true,
         dntEnabled: true,
         fingerprintShieldEnabled: true,
       });
     }
   } catch (e) {
-    run({
-      gpcEnabled: false,
-      dntEnabled: true,
-      fingerprintShieldEnabled: true,
-    });
+    run({ gpcEnabled: true, dntEnabled: true, fingerprintShieldEnabled: true });
   }
 
   function cleanCurrentUrl() {
