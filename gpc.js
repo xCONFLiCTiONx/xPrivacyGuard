@@ -1,36 +1,19 @@
-// gpc.js - Injected into MAIN world at document_start to respect GPC settings
+// mobile/gpc.js (Main World Safe Version)
 (function () {
-  "use strict";
+  // Since MAIN world can't call chrome APIs, check if an attribute or meta tag 
+  // was set by the isolated content script, or execute conditionally.
+  // Alternatively, if managed purely via content.js injection above, this file can be left blank or removed from main world injection.
+
+  const metaTag = document.querySelector('meta[name="xprivacy-gpc"]');
+  if (metaTag && metaTag.getAttribute('content') === 'false') {
+    return; // Respect user disable
+  }
 
   try {
-    chrome.storage.local.get({ gpcEnabled: true }, function (data) {
-      if (!data.gpcEnabled) {
-        return; // Exit early if GPC is disabled in settings
-      }
-
-      if (typeof Navigator !== "undefined" && Navigator.prototype) {
-        Object.defineProperty(Navigator.prototype, "globalPrivacyControl", {
-          get: function () {
-            return true;
-          },
-          configurable: true,
-          enumerable: true,
-        });
-      }
-
-      if (typeof navigator !== "undefined") {
-        if (
-          !("globalPrivacyControl" in navigator) ||
-          navigator.globalPrivacyControl !== true
-        ) {
-          Object.defineProperty(navigator, "globalPrivacyControl", {
-            value: true,
-            writable: false,
-            configurable: true,
-            enumerable: true,
-          });
-        }
-      }
+    Object.defineProperty(navigator, 'globalPrivacyControl', {
+      get: () => true,
+      configurable: true,
+      enumerable: true
     });
-  } catch (e) {}
+  } catch (e) { }
 })();

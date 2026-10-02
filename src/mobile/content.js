@@ -1,21 +1,23 @@
 (function () {
-  'use strict';
+  "use strict";
 
   // GPC injection — separate function so it can be conditionally called
   function injectGpcSignal() {
     try {
-      if (!('globalPrivacyControl' in Navigator.prototype)) {
-        Object.defineProperty(Navigator.prototype, 'globalPrivacyControl', {
-          get: function () { return true; },
+      if (!("globalPrivacyControl" in Navigator.prototype)) {
+        Object.defineProperty(Navigator.prototype, "globalPrivacyControl", {
+          get: function () {
+            return true;
+          },
           configurable: true,
-          enumerable: true
+          enumerable: true,
         });
       } else {
-        Object.defineProperty(navigator, 'globalPrivacyControl', {
+        Object.defineProperty(navigator, "globalPrivacyControl", {
           value: true,
           writable: false,
           configurable: true,
-          enumerable: true
+          enumerable: true,
         });
       }
     } catch (e) {}
@@ -24,11 +26,13 @@
   // DNT injection — separate function so it can be conditionally called
   function injectDntSignal() {
     try {
-      if (!('doNotTrack' in Navigator.prototype)) {
-        Object.defineProperty(Navigator.prototype, 'doNotTrack', {
-          get: function () { return '1'; },
+      if (!("doNotTrack" in Navigator.prototype)) {
+        Object.defineProperty(Navigator.prototype, "doNotTrack", {
+          get: function () {
+            return "1";
+          },
           configurable: true,
-          enumerable: true
+          enumerable: true,
         });
       }
     } catch (e) {}
@@ -37,17 +41,17 @@
   // Fingerprint protections (canvas, WebGL, audio, hardware spoofing)
   function injectFingerprintShield() {
     try {
-      Object.defineProperty(Navigator.prototype, 'hardwareConcurrency', {
+      Object.defineProperty(Navigator.prototype, "hardwareConcurrency", {
         get: () => 8,
-        configurable: true
+        configurable: true,
       });
-      Object.defineProperty(Navigator.prototype, 'deviceMemory', {
+      Object.defineProperty(Navigator.prototype, "deviceMemory", {
         get: () => 8,
-        configurable: true
+        configurable: true,
       });
-      Object.defineProperty(Navigator.prototype, 'maxTouchPoints', {
+      Object.defineProperty(Navigator.prototype, "maxTouchPoints", {
         get: () => 5,
-        configurable: true
+        configurable: true,
       });
     } catch (e) {}
 
@@ -72,8 +76,9 @@
         } catch (e) {}
       };
 
-      const originalGetImageData = CanvasRenderingContext2D.prototype.getImageData;
-      CanvasRenderingContext2D.prototype.getImageData = function(x, y, w, h) {
+      const originalGetImageData =
+        CanvasRenderingContext2D.prototype.getImageData;
+      CanvasRenderingContext2D.prototype.getImageData = function (x, y, w, h) {
         const imageData = originalGetImageData.apply(this, arguments);
         try {
           if (imageData && imageData.data && imageData.data.length >= 4) {
@@ -85,13 +90,13 @@
       };
 
       const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
-      HTMLCanvasElement.prototype.toDataURL = function(type, quality) {
+      HTMLCanvasElement.prototype.toDataURL = function (type, quality) {
         applyCanvasNoise(this);
         return originalToDataURL.apply(this, arguments);
       };
 
       const originalToBlob = HTMLCanvasElement.prototype.toBlob;
-      HTMLCanvasElement.prototype.toBlob = function(callback, ...args) {
+      HTMLCanvasElement.prototype.toBlob = function (callback, ...args) {
         applyCanvasNoise(this);
         return originalToBlob.apply(this, [callback, ...args]);
       };
@@ -102,7 +107,7 @@
       const spoofWebGL = (contextProto) => {
         if (!contextProto || !contextProto.prototype) return;
         const originalGetParameter = contextProto.prototype.getParameter;
-        contextProto.prototype.getParameter = function(parameter) {
+        contextProto.prototype.getParameter = function (parameter) {
           if (
             parameter === 37445 ||
             parameter === 37446 ||
@@ -111,10 +116,10 @@
             parameter === 0x3745 ||
             parameter === 0x3746
           ) {
-            return 'PROTECTED';
+            return "PROTECTED";
           }
-          if (parameter === 0x1F00) return 'Google Inc.';
-          if (parameter === 0x1F01) return 'ANGLE';
+          if (parameter === 0x1f00) return "Google Inc.";
+          if (parameter === 0x1f01) return "ANGLE";
           return originalGetParameter.apply(this, arguments);
         };
 
@@ -123,7 +128,7 @@
           if (name === "WEBGL_debug_renderer_info") {
             return {
               UNMASKED_VENDOR_WEBGL: 37445,
-              UNMASKED_RENDERER_WEBGL: 37446
+              UNMASKED_RENDERER_WEBGL: 37446,
             };
           }
           return oldGetExtension.call(this, name);
@@ -151,18 +156,6 @@
     } catch (e) {}
   }
 
-  // Read settings and conditionally inject protections.
-  // content.js runs in MAIN world so chrome.storage is not available here —
-  // but the inline‑script injection below re‑enters MAIN world via an
-  // injected <script> tag. We need the *content‑script* portion (which
-  // DOES have chrome.storage access in Firefox‑based mobile browsers and
-  // some Chromium forks) to gate the MAIN‑world injection.
-  //
-  // On mobile Chromium (Kiwi, etc.) the manifest declares this script in
-  // MAIN world, so chrome.storage may be undefined. To handle both cases
-  // we attempt chrome.storage first; if unavailable we fall back to
-  // enabling everything (same as the old behaviour).
-
   function applyProtections(settings) {
     if (settings.gpcEnabled) {
       injectGpcSignal();
@@ -178,42 +171,53 @@
   // Build the MAIN‑world injection string with baked‑in settings
   function injectIntoPage(settings) {
     try {
-      const script = document.createElement('script');
+      const script = document.createElement("script");
       script.textContent =
-        '(' + function(s) {
-          // Re‑declare the helpers inside the page context
+        "(" +
+        function (s) {
           function _injectGpc() {
             try {
-              if (!('globalPrivacyControl' in Navigator.prototype)) {
-                Object.defineProperty(Navigator.prototype, 'globalPrivacyControl', {
-                  get: function () { return true; },
-                  configurable: true,
-                  enumerable: true
-                });
+              if (!("globalPrivacyControl" in Navigator.prototype)) {
+                Object.defineProperty(
+                  Navigator.prototype,
+                  "globalPrivacyControl",
+                  {
+                    get: function () {
+                      return true;
+                    },
+                    configurable: true,
+                    enumerable: true,
+                  }
+                );
               } else {
-                Object.defineProperty(navigator, 'globalPrivacyControl', {
+                Object.defineProperty(navigator, "globalPrivacyControl", {
                   value: true,
                   writable: false,
                   configurable: true,
-                  enumerable: true
+                  enumerable: true,
                 });
               }
             } catch (e) {}
           }
           function _injectDnt() {
             try {
-              if (!('doNotTrack' in Navigator.prototype)) {
-                Object.defineProperty(Navigator.prototype, 'doNotTrack', {
-                  get: function () { return '1'; },
+              if (!("doNotTrack" in Navigator.prototype)) {
+                Object.defineProperty(Navigator.prototype, "doNotTrack", {
+                  get: function () {
+                    return "1";
+                  },
                   configurable: true,
-                  enumerable: true
+                  enumerable: true,
                 });
               }
             } catch (e) {}
           }
           if (s.gpcEnabled) _injectGpc();
           if (s.dntEnabled) _injectDnt();
-        }.toString() + ')(' + JSON.stringify(settings) + ');';
+        }.toString() +
+        ")(" +
+        JSON.stringify(settings) +
+        ");";
       (document.head || document.documentElement).appendChild(script);
       script.remove();
     } catch (e) {}
@@ -224,37 +228,87 @@
     injectIntoPage(settings);
   }
 
-  // Try to read settings; fall back to all‑enabled if chrome.storage is
-  // unavailable (MAIN world on most Chromium).
+  // Fix: When chrome.storage is unavailable in MAIN world, query the background script
+  // via runtime message instead of falling back blindly to true.
   try {
-    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.get({
-        gpcEnabled: true,
-        dntEnabled: true,
-        fingerprintShieldEnabled: true
-      }, function(items) {
-        run(items);
-      });
+    if (
+      typeof chrome !== "undefined" &&
+      chrome.runtime &&
+      chrome.runtime.sendMessage
+    ) {
+      chrome.runtime.sendMessage(
+        { action: "getSettings" },
+        function (response) {
+          if (response && response.settings) {
+            run(response.settings);
+          } else {
+            // Fallback if no response, but respect explicit false defaults
+            run({
+              gpcEnabled: false,
+              dntEnabled: true,
+              fingerprintShieldEnabled: true,
+            });
+          }
+        }
+      );
+    } else if (
+      typeof chrome !== "undefined" &&
+      chrome.storage &&
+      chrome.storage.local
+    ) {
+      chrome.storage.local.get(
+        {
+          gpcEnabled: true,
+          dntEnabled: true,
+          fingerprintShieldEnabled: true,
+        },
+        function (items) {
+          run(items);
+        }
+      );
     } else {
-      // No storage access — enable everything (safe default)
-      run({ gpcEnabled: true, dntEnabled: true, fingerprintShieldEnabled: true });
+      run({
+        gpcEnabled: false,
+        dntEnabled: true,
+        fingerprintShieldEnabled: true,
+      });
     }
   } catch (e) {
-    run({ gpcEnabled: true, dntEnabled: true, fingerprintShieldEnabled: true });
+    run({
+      gpcEnabled: false,
+      dntEnabled: true,
+      fingerprintShieldEnabled: true,
+    });
   }
 
   function cleanCurrentUrl() {
     try {
       const trackingParams = [
-        'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id',
-        'fbclid', 'gclid', 'gbraid', 'wbraid', 'msclkid', 'twclid', 'igshid', 'yclid',
-        'mc_eid', '_hsenc', '_hsmi', '_openstat', 'dclid'
+        "utm_source",
+        "utm_medium",
+        "utm_campaign",
+        "utm_term",
+        "utm_content",
+        "utm_id",
+        "fbclid",
+        "gclid",
+        "gbraid",
+        "wbraid",
+        "msclkid",
+        "twclid",
+        "igshid",
+        "yclid",
+        "mc_eid",
+        "_hsenc",
+        "_hsmi",
+        "_openstat",
+        "dclid",
       ];
 
       const url = new URL(window.location.href);
       let removedCount = 0;
 
-      trackingParams.forEach(param => {
+      trackingParams.forEach((param) => {
         if (url.searchParams.has(param)) {
           url.searchParams.delete(param);
           removedCount++;
@@ -262,18 +316,28 @@
       });
 
       if (removedCount > 0) {
-        window.history.replaceState(window.history.state, document.title, url.href);
-        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-          chrome.runtime.sendMessage({ action: 'incrementBlockedCount', count: removedCount });
+        window.history.replaceState(
+          window.history.state,
+          document.title,
+          url.href
+        );
+        if (
+          typeof chrome !== "undefined" &&
+          chrome.runtime &&
+          chrome.runtime.sendMessage
+        ) {
+          chrome.runtime.sendMessage({
+            action: "incrementBlockedCount",
+            count: removedCount,
+          });
         }
       }
     } catch (e) {}
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', cleanCurrentUrl);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", cleanCurrentUrl);
   } else {
     cleanCurrentUrl();
   }
 })();
-
