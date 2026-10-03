@@ -228,7 +228,7 @@
     injectIntoPage(settings);
   }
 
-  // Fetch settings from background script via runtime messaging since chrome.storage is blocked in MAIN world
+  // Query background script for settings; fallback safely if messaging fails
   try {
     if (
       typeof chrome !== "undefined" &&
@@ -247,6 +247,21 @@
               fingerprintShieldEnabled: true,
             });
           }
+        }
+      );
+    } else if (
+      typeof chrome !== "undefined" &&
+      chrome.storage &&
+      chrome.storage.local
+    ) {
+      chrome.storage.local.get(
+        {
+          gpcEnabled: true,
+          dntEnabled: true,
+          fingerprintShieldEnabled: true,
+        },
+        function (items) {
+          run(items);
         }
       );
     } else {
