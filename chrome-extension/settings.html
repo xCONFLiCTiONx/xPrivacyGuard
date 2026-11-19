@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>xPrivacyGuard Options</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        padding: 24px; max-width: 760px; margin: 0 auto;
+        background-color: #0f172a; color: #f1f5f9;
+      }
+      .header-area {
+        display: flex; align-items: center; gap: 12px;
+        margin-bottom: 20px; border-bottom: 2px solid #334155; padding-bottom: 12px;
+      }
+      .header-area img { width: 36px; height: 36px; border-radius: 6px; }
+      h1 { font-size: 22px; margin: 0; color: #f8fafc; }
+      .card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+      .card h2 { font-size: 15px; margin-top: 0; margin-bottom: 12px; color: #f1f5f9; }
+      label { font-size: 13px; font-weight: 600; color: #cbd5e1; display: block; margin-bottom: 6px; }
+      select { width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #334155; font-size: 14px; margin-bottom: 12px; background: #0f172a; color: #f1f5f9; }
+      .domain-list { max-height: 200px; overflow-y: auto; margin-bottom: 12px; border: 1px solid #334155; border-radius: 6px; padding: 6px; background: #0f172a; }
+      .domain-item { display: flex; align-items: center; justify-content: space-between; background: #1e293b; padding: 8px 12px; border-radius: 4px; margin-bottom: 4px; font-size: 13px; border: 1px solid #334155; color: #f1f5f9; }
+      .remove-btn { background: none; border: none; color: #f87171; font-weight: bold; cursor: pointer; padding: 0 6px; }
+      .add-box { display: flex; gap: 8px; }
+      .add-box input { flex: 1; padding: 8px 12px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #f1f5f9; font-size: 13px; }
+      button.btn { padding: 8px 16px; border-radius: 6px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; background-color: #2563eb; color: white; }
+      .empty-notice { font-size: 12px; color: #64748b; font-style: italic; padding: 8px; text-align: center; }
+      .saved-banner { display: none; background-color: #064e3b; color: #a7f3d0; padding: 10px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; margin-bottom: 16px; }
+      input[type="text"], input[type="url"], textarea {
+        width: 100%; padding: 9px 11px; border-radius: 6px; border: 1px solid #334155;
+        background: #0f172a; color: #f1f5f9; font-size: 13px; margin-bottom: 10px;
+      }
+      textarea { min-height: 90px; resize: vertical; font-family: ui-monospace, monospace; }
+      .filter-list, .custom-rule, .debug-entry {
+        display: flex; align-items: center; gap: 10px; padding: 10px;
+        border: 1px solid #334155; border-radius: 6px; margin-bottom: 8px;
+        background: #0f172a; font-size: 12px;
+      }
+      .filter-list-main { flex: 1; min-width: 0; }
+      .filter-list-name { font-weight: 700; color: #f8fafc; }
+      .filter-list-meta { color: #94a3b8; overflow-wrap: anywhere; margin-top: 3px; }
+      .filter-list-actions { display: flex; gap: 5px; }
+      .filter-list-actions button, .custom-rule button, .compact-btn {
+        width: auto; padding: 6px 9px; font-size: 11px; background: #334155; color: #f1f5f9;
+      }
+      .custom-rule input[type="text"] { margin: 0; flex: 1; font-family: ui-monospace, monospace; }
+      .filter-form { display: grid; grid-template-columns: 1fr 2fr auto; gap: 8px; align-items: start; }
+      .filter-form input { margin: 0; }
+      .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+      .stat { padding: 10px; border-radius: 6px; background: #0f172a; text-align: center; }
+      .stat strong { display: block; font-size: 20px; color: #60a5fa; }
+      .stat span { color: #94a3b8; font-size: 11px; }
+      .debug-entry { display: block; overflow-wrap: anywhere; }
+      .muted { color: #94a3b8; font-size: 12px; }
+      .error-banner { display: none; background: #7f1d1d; color: #fecaca; padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+      .inline-label { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+      @media (max-width: 600px) {
+        .filter-form { grid-template-columns: 1fr; }
+        .filter-list { align-items: flex-start; flex-wrap: wrap; }
+        .filter-list-actions { margin-left: 28px; }
+        .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header-area">
+      <img src="../icons/icon48.png" alt="xPrivacyGuard Logo" />
+      <h1>xPrivacyGuard Options</h1>
+    </div>
+    <div id="saved-banner" class="saved-banner">Settings saved successfully!</div>
+    <div id="error-banner" class="error-banner" role="alert"></div>
+    <div class="card">
+      <h2>Protection Settings</h2>
+      <label for="mode">Protection Mode</label>
+      <select id="mode">
+        <option value="daily">Daily browsing</option>
+        <option value="cautious">Cautious browsing (testing or suspicious sites)</option>
+      </select>
+      <p style="font-size: 12px; color: #94a3b8; margin-top: -6px;">
+        Daily browsing balances privacy and compatibility. Cautious browsing adds stronger protections that may break site features; use it for testing or on suspicious sites. Reload open tabs after changing modes.
+      </p>
+      <label style="display: flex; align-items: center; gap: 8px; margin-top: 12px; cursor: pointer; color: #f1f5f9;">
+        <input type="checkbox" id="enableGPC" style="width: auto; margin: 0;"> Enable Global Privacy Control (GPC)
+      </label>
+    </div>
+    <div class="card">
+      <h2>Excluded Domains</h2>
+      <p style="font-size: 12px; color: #94a3b8; margin-top: 0; margin-bottom: 12px;">
+        xPrivacyGuard fingerprint protection is disabled on these domains.
+      </p>
+      <div class="domain-list" id="domain-list">
+        <div class="empty-notice">No domains excluded</div>
+      </div>
+      <label for="new-domain-input">Add new domain to exclude</label>
+      <div class="add-box">
+        <input type="text" id="new-domain-input" placeholder="e.g. portfolio.com" />
+        <button class="btn" id="add-domain-btn">Add Domain</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Muted Sites</h2>
+      <p style="font-size: 12px; color: #94a3b8; margin-top: 0; margin-bottom: 12px;">
+        Audio is automatically muted for tabs on these sites.
+      </p>
+      <div class="domain-list" id="muted-sites-list">
+        <div class="empty-notice">No sites muted</div>
+      </div>
+      <label for="new-muted-site-input">Add new site to mute</label>
+      <div class="add-box">
+        <input type="text" id="new-muted-site-input" placeholder="e.g. noisy-site.com" />
+        <button class="btn" id="add-muted-site-btn">Mute Site</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Filter Lists</h2>
+      <p class="muted">Lists download in the background and update on the selected schedule. A failed update keeps the last valid copy.</p>
+      <label for="filter-update-hours">Automatic update interval</label>
+      <select id="filter-update-hours">
+        <option value="12">Every 12 hours</option>
+        <option value="24">Every 24 hours</option>
+        <option value="48">Every 48 hours</option>
+        <option value="168">Every 7 days</option>
+      </select>
+      <div id="filter-lists"></div>
+      <h3>Add custom filter list</h3>
+      <div class="filter-form">
+        <input id="new-list-name" type="text" placeholder="List name" maxlength="100">
+        <input id="new-list-url" type="url" placeholder="https://example.com/filters.txt">
+        <button class="btn" id="add-list-btn" type="button">Add List</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Custom Rules</h2>
+      <p class="muted">One Adblock Plus-compatible rule per entry. Rules unsupported by the engine are ignored and reported only in debug mode.</p>
+      <div class="add-box">
+        <input id="new-filter-rule" type="text" placeholder="||ads.example.com^ or example.com##.advertisement">
+        <button class="btn" id="add-filter-rule-btn" type="button">Add Rule</button>
+      </div>
+      <div id="custom-filter-rules"></div>
+    </div>
+    <div class="card">
+      <h2>Filtering Statistics</h2>
+      <div class="stats-grid">
+        <div class="stat"><strong id="stat-blocked">0</strong><span>Blocked</span></div>
+        <div class="stat"><strong id="stat-allowed">0</strong><span>Allowed</span></div>
+        <div class="stat"><strong id="stat-cosmetic">0</strong><span>Cosmetic selectors</span></div>
+        <div class="stat"><strong id="stat-scriptlet">0</strong><span>Scriptlets</span></div>
+      </div>
+      <p class="muted">Chrome does not identify which extension blocked a request, so Blocked may include blocks from other extensions. Allowed network counts require filter debug logging and its optional permission.</p>
+    </div>
+    <div class="card">
+      <h2>Filter Debugging</h2>
+      <label class="inline-label">
+        <input type="checkbox" id="filter-debug" style="width:auto; margin:0">
+        Enable filter debug logging (network counters require optional DNR feedback permission)
+      </label>
+      <div class="filter-controls-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+        <div>
+          <label for="debug-category">Show events</label>
+          <select id="debug-category" style="margin-bottom: 0;">
+            <option value="all">All categories</option>
+            <option value="blocked">Blocked</option>
+            <option value="allowed">Allowed</option>
+            <option value="cosmetic">Cosmetic</option>
+            <option value="scriptlet">Scriptlet</option>
+            <option value="unsupported">Unsupported</option>
+          </select>
+        </div>
+        <div>
+          <label for="debug-tab">Filter by tab</label>
+          <select id="debug-tab" style="margin-bottom: 0;">
+            <option value="all">All tabs &amp; background</option>
+          </select>
+        </div>
+      </div>
+      <div id="filter-debug-log" class="domain-list" style="max-height:320px"></div>
+      <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap;">
+        <button class="btn compact-btn" id="refresh-filter-debug-log" type="button">Refresh Logs</button>
+        <button class="btn compact-btn" id="copy-filter-debug-log" type="button">Copy Logs</button>
+        <button class="btn compact-btn" id="export-filter-debug-log" type="button">Export to .txt</button>
+        <button class="btn compact-btn" id="clear-filter-debug-log" type="button">Clear Logs</button>
+        <button class="btn compact-btn" id="reset-filter-stats" type="button">Reset Counters</button>
+        <label class="inline-label" style="margin: 0; font-size: 12px; margin-left: auto; cursor: pointer;">
+          <input type="checkbox" id="live-debug-log" style="width:auto; margin:0;" checked>
+          Real-time updates
+        </label>
+      </div>
+      <label class="inline-label">
+        <input type="checkbox" id="disable-filter-stats" style="width:auto; margin:0">
+        Disable filtering counters entirely
+      </label>
+    </div>
+    <div class="card">
+      <h2>Backup &amp; Restore</h2>
+      <p class="muted">Export or import your xPrivacyGuard configuration, including protection mode, GPC toggle, excluded domains, muted sites, filter lists, and custom rules.</p>
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <button class="btn" id="export-settings-btn" type="button">Export Settings</button>
+        <button class="btn compact-btn" id="copy-settings-btn" type="button">Copy Settings</button>
+        <button class="btn compact-btn" id="import-settings-btn" type="button">Import Settings</button>
+        <input type="file" id="import-settings-file" accept=".json,application/json" style="display: none;">
+      </div>
+    </div>
+    <p class="muted">This implements a supported subset, not full uBlock Origin compatibility. Remote lists are parsed as data only; arbitrary list-supplied JavaScript is never executed. Procedural filtering is limited to browser-supported CSS selectors and the local remove-class/remove-node-text scriptlets. DNR compiles up to 4,500 network rules.</p>
+    <script src="settings.js"></script>
+  </body>
+</html>

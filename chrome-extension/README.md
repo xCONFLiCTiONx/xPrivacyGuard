@@ -1,0 +1,22 @@
+# Desktop filter engine
+
+xPrivacyGuard Desktop can download filter lists from HTTP(S) URLs, retain the last successful copy when an update fails, and refresh enabled lists on a configurable schedule. List data and compiled records are stored in IndexedDB; settings and metadata use local extension storage.
+
+Default subscriptions are configured in `filters/defaults.js` (none pre-configured by default). Users can add, enable, disable, refresh, or remove custom lists in Settings. Custom rules can also be managed there, and the popup provides a per-site filtering switch independent of the global protection mode.
+
+The supported network syntax includes ABP URL patterns, exceptions, resource-type modifiers, `$important`, `$third-party`/`$~third-party`, `$domain=`, and `$denyallow=` when supported by the browser's DNR API. `$fetch` is mapped to DNR's `xmlhttprequest` type and cannot distinguish Fetch API from XMLHttpRequest. Compatible rules are compiled to MV3 `declarativeNetRequest` dynamic rules, with a 4,500-rule cap. More complex or unknown modifiers are ignored, not interpreted as if supported.
+
+Cosmetic filters and cosmetic exceptions support ordinary CSS selectors and hostname scopes. Procedural filtering is limited to CSS selectors understood by the browser. Filter-list scriptlets are limited to the local `remove-class` and `remove-node-text` implementations; a built-in Peacock-only video ad handler is also available. Remote filter lists are never executed as JavaScript. Redirect, regular-expression, and other unimplemented filter syntax is ignored. This is a practical subset, not full uBlock Origin compatibility, and it should not be presented as a drop-in equivalent.
+
+Filter lists are downloaded as untrusted data. URLs are restricted to HTTP(S), list size is capped, selectors and scriptlet arguments are constrained, and remote scriptlet names must match local implementations. Network match counters require the optional DNR feedback permission; ordinary filtering does not. Debug logging is off by default and stored locally.
+
+On Peacock (`peacocktv.com`), the desktop extension additionally blocks FreeWheel requests made by that site and temporarily mutes/accelerates video only while a visible ad-break marker is present. Google DoubleClick requests are already covered by the built-in network rules. This is a best-effort fallback: server-side ad insertion and changing player markup can prevent detection, and blocking an ad request may disrupt playback. The feature follows the normal per-site disable and exception settings. MV3 request rules cannot rewrite VMAP/VAST response bodies; the extension does not spoof empty manifests or patch page `fetch`.
+
+Run the unit checks from the extension source directory with:
+
+```powershell
+node .\filters\tests\parser.test.js
+node .\filters\tests\engine.test.js
+node .\filters\tests\lists.test.js
+node .\filters\tests\badge.test.js
+```

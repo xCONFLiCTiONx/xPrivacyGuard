@@ -1,0 +1,32 @@
+/* High-confidence ad placements and common ad placeholders. */
+.adsbygoogle,
+ins.adsbygoogle,
+[data-ad],
+[data-ad-slot],
+[data-ad-client],
+[data-advertisement],
+[aria-label^="advertisement" i],
+[aria-label^="sponsored" i],
+iframe[src*="doubleclick.net"],
+iframe[src*="googlesyndication.com"],
+iframe[src*="adnxs.com"],
+iframe[src*="amazon-adsystem.com"],
+#ad,
+#ads,
+#advertisement,
+.ad,
+.ads,
+.advert,
+.advertisement,
+.sponsored-ad,
+[id^="ad-"],
+[id^="ads-"],
+[id$="-ad"],
+[class^="ad-"],
+[class^="ads-"],
+[class$="-ad"],
+[class~="ad"],
+[class~="ads"] {
+  display: none !important;
+  visibility: hidden !important;
+}

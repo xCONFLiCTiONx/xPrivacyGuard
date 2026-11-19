@@ -1,0 +1,107 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "imasdk.googleapis.com",
+        "googleads.doubleclick.net",
+        "googleads.g.doubleclick.net",
+        "securepubads.g.doubleclick.net",
+        "pagead2.googlesyndication.com",
+        "c.amazon-adsystem.com",
+        "openfpcdn.io",
+        "static.criteo.net",
+        "pixel.quantserve.com",
+        "scorecardresearch.com",
+        "snap.licdn.com",
+        "s.pinimg.com",
+        "analytics.tiktok.com",
+        "www.redditstatic.com",
+        "static.ads-twitter.com"
+      ],
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "stylesheet",
+        "script",
+        "image",
+        "font",
+        "object",
+        "xmlhttprequest",
+        "ping",
+        "csp_report",
+        "media",
+        "websocket",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 2,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "||facebook.com/tr^",
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "script",
+        "image",
+        "xmlhttprequest",
+        "ping",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 3,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "||google-analytics.com/g/collect^",
+      "resourceTypes": [
+        "xmlhttprequest",
+        "ping",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 4,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "||advibe.click/analytics/collect^",
+      "resourceTypes": [
+        "xmlhttprequest",
+        "ping",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 5,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "||dev.siliconsquire.com/matomo.js^",
+      "resourceTypes": [
+        "script",
+        "xmlhttprequest",
+        "other"
+      ]
+    }
+  }
+]

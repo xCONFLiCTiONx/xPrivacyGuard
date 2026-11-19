@@ -1,0 +1,72 @@
+{
+  "manifest_version": 3,
+  "name": "xPrivacyGuard Desktop",
+  "version": "2.1.0",
+  "description": "Advanced browser fingerprint protection, Global Privacy Control (GPC), URL parameter sanitizer, and ad blocker companion.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "declarativeNetRequest",
+    "alarms",
+    "webRequest",
+    "tabs"
+  ],
+  "optional_permissions": [
+    "declarativeNetRequestFeedback"
+  ],
+  "host_permissions": [
+    "<all_urls>",
+    "file:///*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_page": "settings.html",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "xPrivacyGuard"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>",
+        "file:///*"
+      ],
+      "js": [
+        "renderIcon.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "resources/noop.mp4"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "gpc_rules",
+        "enabled": true,
+        "path": "rules.json"
+      },
+      {
+        "id": "extreme_rules",
+        "enabled": false,
+        "path": "extreme_rules.json"
+      }
+    ]
+  }
+}
