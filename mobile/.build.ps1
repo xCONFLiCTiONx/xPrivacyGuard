@@ -99,11 +99,46 @@ if (-not $Package) {
 
 Write-Host "Package: $Package" -ForegroundColor Cyan
 
-# 4. Install the APK.
-Invoke-Checked 'adb' @('install', '-r', $Apk.FullName)
+# 4. Locate adb and check for an attached authorized device.
+$AdbPath = $null
+$adbCmd = Get-Command adb -ErrorAction SilentlyContinue
+if ($adbCmd) {
+    $AdbPath = $adbCmd.Source
+} else {
+    $adbSdk = if ($Sdk) { $Sdk } else { Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
+    $sdkAdb = Join-Path $adbSdk 'platform-tools\adb.exe'
+    if (Test-Path $sdkAdb) {
+        $AdbPath = $sdkAdb
+    }
+}
 
-# 5. Resolve and launch this package's actual launcher activity.
-$ActivityOutput = & adb shell cmd package resolve-activity --brief `
+if (-not $AdbPath) {
+    Write-Host 'adb.exe not found. Build succeeded; skipping install and launch.' -ForegroundColor Yellow
+    exit 0
+}
+
+$DevicesOutput = & $AdbPath devices
+if ($LASTEXITCODE -ne 0) {
+    Write-Host 'Could not query ADB devices. Build succeeded; skipping install and launch.' -ForegroundColor Yellow
+    exit 0
+}
+$UnauthorizedDevices = @($DevicesOutput | Select-Object -Skip 1 | Where-Object { $_ -match '\S+\s+unauthorized\s*$' })
+$ConnectedDevices = @($DevicesOutput | Select-Object -Skip 1 | Where-Object { $_ -match '\S+\s+device\s*$' })
+
+if ($ConnectedDevices.Count -eq 0) {
+    if ($UnauthorizedDevices.Count -gt 0) {
+        Write-Host 'Device connected but unauthorized. Build succeeded; skipping install and launch.' -ForegroundColor Yellow
+    } else {
+        Write-Host 'No Android device attached over ADB. Build succeeded; skipping install and launch.' -ForegroundColor Yellow
+    }
+    exit 0
+}
+
+# 5. Install the APK.
+Invoke-Checked $AdbPath @('install', '-r', $Apk.FullName)
+
+# 6. Resolve and launch this package's actual launcher activity.
+$ActivityOutput = & $AdbPath shell cmd package resolve-activity --brief `
     -a android.intent.action.MAIN `
     -c android.intent.category.LAUNCHER `
     $Package 2>$null
@@ -117,7 +152,7 @@ if (-not $Activity) {
     throw "No launcher activity found for package $Package. APK installed successfully, but it could not be launched."
 }
 
-Invoke-Checked 'adb' @('shell', 'am', 'start', '-n', $Activity)
+Invoke-Checked $AdbPath @('shell', 'am', 'start', '-n', $Activity)
 
 Write-Host 'Build, install, and launch completed successfully.' `
     -ForegroundColor Green
