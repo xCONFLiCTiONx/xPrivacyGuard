@@ -22,6 +22,14 @@ const parsed = globalThis.FilterParser.parseFilterList([
   "site.test#@#.ad",
   "site.test##.sponsored"
 ].join("\n")).parsed;
+// Simulate an old IndexedDB cache containing the former noopmp4 redirect.
+parsed.network.push({
+  type: "network",
+  pattern: "||ark.tubi.video/v2/*.mp4",
+  resourceTypes: ["media"],
+  redirect: "/resources/noop.mp4",
+  exception: false
+});
 
 globalThis.chrome = {
   storage: {
@@ -66,6 +74,11 @@ globalThis.FilterStorage = {
   const { rules } = globalThis.chrome.declarativeNetRequest;
   assert.equal(globalThis.chrome.declarativeNetRequest.updates, 2);
   assert.equal(rules.length, 6);
+  assert.equal(
+    rules.some((rule) => rule.condition.urlFilter === "||ark.tubi.video/v2/*.mp4"),
+    false,
+    "Legacy cached noopmp4 redirects must be discarded"
+  );
   assert.equal(rules.find((rule) => rule.condition.urlFilter === "||ads.test^").priority, 100);
   assert.equal(rules.find((rule) => rule.condition.urlFilter === "||ads.test/allowed^").priority, 150);
   assert.equal(rules.find((rule) => rule.condition.urlFilter === "||critical.test^" && rule.action.type === "block").priority, 200);
