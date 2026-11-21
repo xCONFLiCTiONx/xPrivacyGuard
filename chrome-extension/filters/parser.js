@@ -19,6 +19,7 @@
   };
   const ALL_RESOURCE_TYPES = Array.from(new Set([...Object.values(RESOURCE_TYPES).flat(), "csp_report"]));
   const SCRIPTLET_NAMES = new Set(["remove-class", "remove-node-text"]);
+
   function parseArguments(input) {
     const args = [];
     let current = "";
