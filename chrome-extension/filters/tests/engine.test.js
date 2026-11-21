@@ -78,10 +78,17 @@ globalThis.FilterStorage = {
 
   const page = await globalThis.FilterEngine.getPageFilters("https://www.site.test/");
   assert.deepEqual(page.selectors, [".sponsored"]);
-  assert.deepEqual(
-    (await globalThis.FilterEngine.getPageFilters("https://www.peacocktv.com/watch/")).scriptlets,
-    [{ name: "skip-video-ads", args: [] }]
-  );
+  for (const url of [
+    "https://www.peacocktv.com/watch/",
+    "https://pluto.tv/live-tv/",
+    "https://tubitv.com/"
+  ]) {
+    assert.deepEqual(
+      (await globalThis.FilterEngine.getPageFilters(url)).scriptlets,
+      [],
+      `No playback-control scriptlets may be injected on ${url}`
+    );
+  }
   const disabled = await globalThis.FilterEngine.getPageFilters("https://paused.example/");
   assert.deepEqual(disabled.selectors, []);
   assert.deepEqual(disabled.scriptlets, []);
