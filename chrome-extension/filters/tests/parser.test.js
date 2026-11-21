@@ -41,6 +41,14 @@ assert.equal(parseRule("||example.com^$important").important, true);
 assert.equal(parseRule("||example.com^$~script").resourceTypes.includes("script"), false);
 assert.equal(parseRule("||example.com^$script,~script").type, "unsupported");
 assert.equal(parseRule("||example.com^$redirect=https://other.example").type, "unsupported");
+assert.throws(
+  () => globalThis.FilterNetwork.compileNetworkRule({
+    pattern: "||ark.tubi.video/v2/*.mp4",
+    resourceTypes: ["media"],
+    redirect: "/resources/noop.mp4"
+  }, 99, 100),
+  /Redirect rules are not supported/
+);
 
 const cosmetic = parseRule("example.com##.advertisement");
 const cosmeticException = parseRule("example.com#@#.advertisement");
