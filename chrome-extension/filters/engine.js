@@ -379,12 +379,9 @@
     );
     return {
       ...pageRules,
-      scriptlets: !excluded && (
-        hostname === "peacocktv.com" || hostname.endsWith(".peacocktv.com")
-        || hostname === "pluto.tv" || hostname.endsWith(".pluto.tv")
-      )
-        ? [...pageRules.scriptlets, { name: "skip-video-ads", args: [] }]
-        : pageRules.scriptlets,
+      // Never alter media playback. Site-specific ad skipping can break episode
+      // transitions and mistake ordinary player UI for an active ad break.
+      scriptlets: pageRules.scriptlets,
       debug: settings.filterDebug === true
     };
   }
