@@ -13,6 +13,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const siteMuteBtn = document.getElementById("site-mute-btn");
   const muteIconEl = document.getElementById("mute-icon");
   const muteLabelEl = document.getElementById("mute-label");
+  const peacockDiagnosticsCard = document.getElementById("peacock-diagnostics-card");
+  const peacockDiagnosticsStatus = document.getElementById("peacock-diagnostics-status");
+  const peacockDiagnosticsToggle = document.getElementById("peacock-diagnostics-toggle");
+  const peacockDiagnosticsExport = document.getElementById("peacock-diagnostics-export");
+  const peacockDiagnosticsClear = document.getElementById("peacock-diagnostics-clear");
 
   let activeTab = null;
   let activeDomain = "";
@@ -55,6 +60,84 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  function isPeacockSite() {
+    return activeDomain === "peacocktv.com" || activeDomain.endsWith(".peacocktv.com");
+  }
+
+  async function refreshPeacockDiagnostics() {
+    if (!peacockDiagnosticsCard) return;
+    peacockDiagnosticsCard.hidden = !isPeacockSite();
+    if (!isPeacockSite()) return;
+    const result = await chrome.runtime.sendMessage({ action: "getPeacockDiagnostics" });
+    if (!result || !result.success) {
+      peacockDiagnosticsStatus.textContent = "Could not read diagnostics status.";
+      return;
+    }
+    peacockDiagnosticsStatus.textContent = result.enabled
+      ? `Capture is ON · ${result.count} events recorded (maximum 2,000).`
+      : `Capture is OFF · ${result.count} saved events.`;
+    peacockDiagnosticsToggle.textContent = result.enabled ? "Stop capture" : "Start capture";
+    peacockDiagnosticsToggle.className = result.enabled ? "btn-warning" : "btn-primary";
+    peacockDiagnosticsExport.disabled = result.count === 0;
+    peacockDiagnosticsClear.disabled = result.count === 0;
+  }
+
+  async function exportPeacockDiagnostics() {
+    const result = await chrome.runtime.sendMessage({
+      action: "getPeacockDiagnostics",
+      includeLog: true
+    });
+    if (!result || !result.success) throw new Error(result && result.error || "Could not export diagnostics.");
+    const report = {
+      product: "xPrivacyGuard Desktop",
+      diagnostic: "Peacock request capture",
+      exportedAt: new Date().toISOString(),
+      eventCount: (result.log || []).length,
+      events: result.log || []
+    };
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = `xPrivacyGuard-peacock-diagnostics-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  }
+
+  if (peacockDiagnosticsToggle) {
+    peacockDiagnosticsToggle.addEventListener("click", async () => {
+      try {
+        const current = await chrome.runtime.sendMessage({ action: "getPeacockDiagnostics" });
+        const result = await chrome.runtime.sendMessage({
+          action: "setPeacockDiagnostics",
+          enabled: !(current && current.enabled)
+        });
+        if (!result || !result.success) throw new Error(result && result.error || "Could not change capture state.");
+        await refreshPeacockDiagnostics();
+      } catch (error) {
+        alert(`Peacock diagnostics error: ${error.message}`);
+      }
+    });
+  }
+  if (peacockDiagnosticsExport) {
+    peacockDiagnosticsExport.addEventListener("click", () => {
+      exportPeacockDiagnostics().catch((error) => alert(`Export failed: ${error.message}`));
+    });
+  }
+  if (peacockDiagnosticsClear) {
+    peacockDiagnosticsClear.addEventListener("click", async () => {
+      if (!confirm("Clear the saved Peacock diagnostics log?")) return;
+      const result = await chrome.runtime.sendMessage({ action: "clearPeacockDiagnostics" });
+      if (!result || !result.success) {
+        alert("Could not clear the Peacock diagnostics log.");
+        return;
+      }
+      await refreshPeacockDiagnostics();
+    });
+  }
+
   async function loadState() {
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tabs && tabs.length > 0) {
@@ -82,6 +165,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     filterDisabledDomains = data.filterDisabledDomains || [];
     mutedSites = data.mutedSites || [];
     updateUI();
+    await refreshPeacockDiagnostics();
     if (isWebPage) {
       const filterData = await chrome.runtime.sendMessage({
         action: "getFilterData",
