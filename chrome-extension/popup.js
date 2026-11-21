@@ -66,16 +66,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function refreshPeacockDiagnostics() {
     if (!peacockDiagnosticsCard) return;
-    peacockDiagnosticsCard.hidden = !isPeacockSite();
-    if (!isPeacockSite()) return;
+    // Keep the control visible on every tab; relying on active-tab hostname
+    // detection hid the only way to start capture on some Peacock sessions.
+    peacockDiagnosticsCard.hidden = false;
     const result = await chrome.runtime.sendMessage({ action: "getPeacockDiagnostics" });
     if (!result || !result.success) {
-      peacockDiagnosticsStatus.textContent = "Could not read diagnostics status.";
+      peacockDiagnosticsStatus.textContent = "Could not read diagnostics status. Check the extension service worker.";
       return;
     }
+    const siteHint = isPeacockSite() ? "" : " Open Peacock in another tab before starting capture.";
     peacockDiagnosticsStatus.textContent = result.enabled
-      ? `Capture is ON · ${result.count} events recorded (maximum 1,000).`
-      : `Capture is OFF · ${result.count} saved events.`;
+      ? `Capture is ON · ${result.count} events recorded (maximum 1,000).${siteHint}`
+      : `Capture is OFF · ${result.count} saved events.${siteHint}`;
     peacockDiagnosticsToggle.textContent = result.enabled ? "Stop capture" : "Start capture";
     peacockDiagnosticsToggle.className = result.enabled ? "btn-warning" : "btn-primary";
     peacockDiagnosticsExport.disabled = result.count === 0;
