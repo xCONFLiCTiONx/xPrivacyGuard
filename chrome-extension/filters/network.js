@@ -2,6 +2,9 @@
   "use strict";
 
   function compileNetworkRule(rule, id, priority) {
+    if (rule && rule.redirect) {
+      throw new Error("Redirect rules are not supported; refusing to compile a media placeholder redirect.");
+    }
     const condition = rule.regex ? { regexFilter: rule.regex } : { urlFilter: rule.pattern };
     if (rule.resourceTypes && rule.resourceTypes.length) condition.resourceTypes = rule.resourceTypes;
     if (rule.domainType) condition.domainType = rule.domainType;
