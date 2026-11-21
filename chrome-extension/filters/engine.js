@@ -244,7 +244,15 @@
     const key = ids.join("\n");
     if (parsedListsCache && parsedListsCacheKey === key) return parsedListsCache;
     const records = await Promise.all(ids.map((id) => root.FilterStorage.get(id)));
-    parsedListsCache = records.filter((record) => record && record.parsed).map((record) => record.parsed);
+    parsedListsCache = records
+      .filter((record) => record && record.parsed)
+      .map((record) => ({
+        ...record.parsed,
+        // Old IndexedDB records may still contain noopmp4 redirects from
+        // earlier extension versions. Ignore them even before a list refresh.
+        network: (Array.isArray(record.parsed.network) ? record.parsed.network : [])
+          .filter((rule) => !rule || !rule.redirect)
+      }));
     parsedListsCacheKey = key;
     return parsedListsCache;
   }
