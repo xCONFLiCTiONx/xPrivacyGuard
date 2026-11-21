@@ -19,12 +19,6 @@
   };
   const ALL_RESOURCE_TYPES = Array.from(new Set([...Object.values(RESOURCE_TYPES).flat(), "csp_report"]));
   const SCRIPTLET_NAMES = new Set(["remove-class", "remove-node-text"]);
-  const REDIRECT_RESOURCES = {
-    noopmp4: "/resources/noop.mp4",
-    "noop-0.1s.mp4": "/resources/noop.mp4",
-    "noop.mp4": "/resources/noop.mp4"
-  };
-
   function parseArguments(input) {
     const args = [];
     let current = "";
@@ -98,16 +92,7 @@
         continue;
       }
       if (option.startsWith("redirect=")) {
-        if (exception) {
-          return { type: "unsupported", reason: "Exception rules cannot use redirect." };
-        }
-        const target = option.slice(9).trim();
-        const extensionPath = REDIRECT_RESOURCES[target];
-        if (!extensionPath) {
-          return { type: "unsupported", reason: `Unsupported redirect target: ${target}` };
-        }
-        rule.redirect = extensionPath;
-        continue;
+        return { type: "unsupported", reason: "Redirect rules are not supported; media must never be replaced with placeholder content." };
       }
       if (option === "third-party" || option === "~third-party") {
         const value = option === "third-party" ? "thirdParty" : "firstParty";
