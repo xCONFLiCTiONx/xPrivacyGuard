@@ -477,6 +477,33 @@ if (chrome.tabs && chrome.tabs.onReplaced) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message && message.action === "setPeacockDiagnostics") {
+    const enabled = message.enabled === true;
+    chrome.storage.local.set({ peacockDiagnosticsEnabled: enabled }).then(
+      () => sendResponse({ success: true, enabled }),
+      (error) => sendResponse({ success: false, error: error.message })
+    );
+    return true;
+  }
+  if (message && message.action === "getPeacockDiagnostics") {
+    chrome.storage.local.get(["peacockDiagnosticsEnabled", "peacockDiagnosticsLog"]).then((data) => {
+      sendResponse({
+        success: true,
+        enabled: data.peacockDiagnosticsEnabled === true,
+        count: Array.isArray(data.peacockDiagnosticsLog) ? data.peacockDiagnosticsLog.length : 0,
+        log: message.includeLog === true && Array.isArray(data.peacockDiagnosticsLog)
+          ? data.peacockDiagnosticsLog : undefined
+      });
+    }, (error) => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+  if (message && message.action === "clearPeacockDiagnostics") {
+    chrome.storage.local.set({ peacockDiagnosticsLog: [] }).then(
+      () => sendResponse({ success: true }),
+      (error) => sendResponse({ success: false, error: error.message })
+    );
+    return true;
+  }
   if (message && message.action === "syncMutedSites") {
     applyAllMutedSites().then(
       () => sendResponse({ success: true }),
@@ -700,6 +727,111 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     registerDebugMatchListener();
   }
 });
+
+// Temporary, opt-in Peacock request diagnostics. This observes traffic only; it never changes requests.
+const PEACOCK_DIAGNOSTICS_MAX_EVENTS = 2000;
+let peacockDiagnosticsEnabled = false;
+let peacockDiagnosticsWriteQueue = Promise.resolve();
+
+chrome.storage.local.get(["peacockDiagnosticsEnabled"], (data) => {
+  peacockDiagnosticsEnabled = data.peacockDiagnosticsEnabled === true;
+});
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace === "local" && changes.peacockDiagnosticsEnabled) {
+    peacockDiagnosticsEnabled = changes.peacockDiagnosticsEnabled.newValue === true;
+  }
+});
+
+function isPeacockHost(hostname) {
+  const host = String(hostname || "").toLowerCase().replace(/\.$/, "");
+  return host === "peacocktv.com" || host.endsWith(".peacocktv.com");
+}
+
+function peacockRequestContext(details) {
+  for (const candidate of [details.initiator, details.documentUrl]) {
+    if (!candidate || candidate === "null") continue;
+    try {
+      const parsed = new URL(candidate);
+      if (isPeacockHost(parsed.hostname)) return parsed.origin;
+    } catch (_) {}
+  }
+  return "";
+}
+
+function sanitizePeacockRequestUrl(value) {
+  try {
+    const url = new URL(value);
+    const sensitive = /^(?:access_token|auth|authorization|bearer|code|device(?:id)?|email|key|nonce|password|session(?:id)?|sig(?:nature)?|token|user(?:id)?)$/i;
+    for (const key of Array.from(url.searchParams.keys())) {
+      if (sensitive.test(key)) url.searchParams.set(key, "[REDACTED]");
+    }
+    url.username = "";
+    url.password = "";
+    return url.href.slice(0, 8192);
+  } catch (_) {
+    return String(value || "").slice(0, 8192);
+  }
+}
+
+function classifyPeacockRequest(details) {
+  const url = String(details.url || "").toLowerCase();
+  const type = String(details.type || "other").toLowerCase();
+  if (type === "media" || /\.(?:m3u8|mpd|mp4|m4s|ts|cmfv|cmfa)(?:$|[?#])/.test(url)
+    || /(?:manifest|playlist|segment|\/cmaf\/)/.test(url)) return "media";
+  if (/fwmrm|freewheel|doubleclick|\/(?:ad|ads|advert|vast|vmap)(?:\/|[?.])|adserver/.test(url)) return "ad-delivery";
+  if (/scorecardresearch|omtrdc|imrworldwide|conviva|newrelic|nr-data|analytics|pixel|\/trk(?:[/?]|$)/.test(url)) return "measurement";
+  return "other";
+}
+
+function recordPeacockDiagnostic(details, outcome) {
+  if (!peacockDiagnosticsEnabled || !details || details.tabId < 0) return;
+  const initiator = peacockRequestContext(details);
+  if (!initiator) return;
+  const responseHeaders = {};
+  for (const header of details.responseHeaders || []) {
+    const name = String(header.name || "").toLowerCase();
+    if (name === "content-type" || name === "content-length") {
+      responseHeaders[name] = String(header.value || "").slice(0, 256);
+    }
+  }
+  const event = {
+    timestamp: new Date(details.timeStamp || Date.now()).toISOString(),
+    tabId: details.tabId,
+    initiator,
+    url: sanitizePeacockRequestUrl(details.url),
+    resourceType: details.type || "other",
+    classification: classifyPeacockRequest(details),
+    outcome,
+    statusCode: typeof details.statusCode === "number" ? details.statusCode : null,
+    error: details.error || null,
+    responseHeaders
+  };
+  peacockDiagnosticsWriteQueue = peacockDiagnosticsWriteQueue.catch(() => {}).then(async () => {
+    const data = await chrome.storage.local.get(["peacockDiagnosticsLog"]);
+    const log = Array.isArray(data.peacockDiagnosticsLog) ? data.peacockDiagnosticsLog : [];
+    log.push(event);
+    if (log.length > PEACOCK_DIAGNOSTICS_MAX_EVENTS) {
+      log.splice(0, log.length - PEACOCK_DIAGNOSTICS_MAX_EVENTS);
+    }
+    await chrome.storage.local.set({ peacockDiagnosticsLog: log });
+  }).catch((error) => console.warn("xPrivacyGuard: Peacock diagnostics write failed:", error));
+}
+
+function registerPeacockDiagnosticsListeners() {
+  if (!chrome.webRequest) return;
+  const filter = { urls: ["<all_urls>"] };
+  chrome.webRequest.onCompleted.addListener(
+    (details) => recordPeacockDiagnostic(details, "completed"),
+    filter,
+    ["responseHeaders"]
+  );
+  chrome.webRequest.onErrorOccurred.addListener(
+    (details) => recordPeacockDiagnostic(details, "failed"),
+    filter
+  );
+}
+
+registerPeacockDiagnosticsListeners();
 
 function registerWebRequestBlockListener() {
   if (!chrome.webRequest || !chrome.webRequest.onErrorOccurred) return;
