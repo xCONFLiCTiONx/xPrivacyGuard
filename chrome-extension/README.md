@@ -17,6 +17,7 @@ Run the unit checks from the extension source directory with:
 ```powershell
 node .\filters\tests\parser.test.js
 node .\filters\tests\engine.test.js
+node .\filters\tests\scriptlets.test.js
 node .\filters\tests\lists.test.js
 node .\filters\tests\badge.test.js
 ```
