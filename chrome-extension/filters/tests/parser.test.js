@@ -88,12 +88,18 @@ for (let i = 0; i < 55000; i++) {
 const largeList = parseFilterList(largeLines.join("\n"));
 assert.ok(largeList.parsed.network.length <= 30000);
 
-const redirectRule = parseRule("||ark.tubi.video/v2/*.mp4$media,redirect=noopmp4,important");
-assert.equal(redirectRule.type, "network");
-assert.equal(redirectRule.redirect, "/resources/noop.mp4");
-assert.equal(redirectRule.important, true);
-assert.deepEqual(redirectRule.resourceTypes, ["media"]);
-assert.equal(parseRule("@@||ark.tubi.video/v2/*.mp4$redirect=noopmp4").type, "unsupported");
-assert.equal(parseRule("||ark.tubi.video/v2/*.mp4$redirect=unknown").type, "unsupported");
+// Placeholder redirects can replace real media and cause streaming players to skip content.
+assert.equal(
+  parseRule("||ark.tubi.video/v2/*.mp4$media,redirect=noopmp4,important").type,
+  "unsupported"
+);
+assert.equal(
+  parseRule("@@||ark.tubi.video/v2/*.mp4$redirect=noopmp4").type,
+  "unsupported"
+);
+assert.equal(
+  parseRule("||ark.tubi.video/v2/*.mp4$redirect=unknown").type,
+  "unsupported"
+);
 
 console.log("Filter parser tests passed.");
