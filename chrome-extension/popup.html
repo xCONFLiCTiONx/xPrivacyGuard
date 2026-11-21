@@ -98,6 +98,16 @@
       <div class="reload-notice" id="filter-list-count">Filter lists: 0</div>
       <div class="reload-notice">Network match counts require optional DNR feedback permission.</div>
     </div>
+    <div class="card" id="peacock-diagnostics-card" hidden>
+      <div class="card-title">Peacock Ad Diagnostics</div>
+      <div class="filter-status" id="peacock-diagnostics-status">Capture is off.</div>
+      <button id="peacock-diagnostics-toggle" class="btn-primary">Start capture</button>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <button id="peacock-diagnostics-export" class="btn-secondary" disabled>Export log</button>
+        <button id="peacock-diagnostics-clear" class="btn-secondary" disabled>Clear</button>
+      </div>
+      <div class="reload-notice">Records completed and failed Peacock-initiated requests, including media type and response status. Sensitive query values are redacted. Capture never blocks or modifies traffic.</div>
+    </div>
     <label for="mode-select" class="section-label">Protection Mode</label>
     <select id="mode-select">
       <option value="daily">Daily browsing</option>
