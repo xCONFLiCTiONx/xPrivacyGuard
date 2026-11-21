@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "xPrivacyGuard Desktop",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Advanced browser fingerprint protection, Global Privacy Control (GPC), URL parameter sanitizer, and ad blocker companion.",
   "permissions": [
     "storage",
