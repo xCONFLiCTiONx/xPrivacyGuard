@@ -538,9 +538,6 @@
         "g.jwpsrv.com",
         "ssl.p.jwpcdn.com",
         "prd.jwpltx.com",
-        "mssl.fwmrm.net",
-        "bea4.v.fwmrm.net",
-        "2975c.v.fwmrm.net",
         "cd.connatix.com",
         "capi.connatix.com",
         "vid.connatix.com",
@@ -664,7 +661,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["dns.adguard.com"],
+      "requestDomains": [
+        "dns.adguard.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -689,7 +688,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["doubleclick.net"],
+      "requestDomains": [
+        "doubleclick.net"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -714,7 +715,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["googleadservices.com"],
+      "requestDomains": [
+        "googleadservices.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -739,7 +742,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["adservice.google.com"],
+      "requestDomains": [
+        "adservice.google.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -764,7 +769,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["googlesyndication.com"],
+      "requestDomains": [
+        "googlesyndication.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -789,7 +796,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["amazon-adsystem.com"],
+      "requestDomains": [
+        "amazon-adsystem.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -814,7 +823,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["adnxs.com"],
+      "requestDomains": [
+        "adnxs.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -839,7 +850,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["criteo.com"],
+      "requestDomains": [
+        "criteo.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -864,7 +877,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["taboola.com"],
+      "requestDomains": [
+        "taboola.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -889,7 +904,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["outbrain.com"],
+      "requestDomains": [
+        "outbrain.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -914,7 +931,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["rubiconproject.com"],
+      "requestDomains": [
+        "rubiconproject.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -939,7 +958,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["pubmatic.com"],
+      "requestDomains": [
+        "pubmatic.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -964,7 +985,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["adform.net"],
+      "requestDomains": [
+        "adform.net"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -989,7 +1012,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["googletagmanager.com"],
+      "requestDomains": [
+        "googletagmanager.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1014,7 +1039,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["google-analytics.com"],
+      "requestDomains": [
+        "google-analytics.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1039,7 +1066,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["connect.facebook.net"],
+      "requestDomains": [
+        "connect.facebook.net"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1064,7 +1093,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["analytics.tiktok.com"],
+      "requestDomains": [
+        "analytics.tiktok.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1089,7 +1120,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["clarity.ms"],
+      "requestDomains": [
+        "clarity.ms"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1114,7 +1147,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["hotjar.com"],
+      "requestDomains": [
+        "hotjar.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1139,7 +1174,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["mixpanel.com"],
+      "requestDomains": [
+        "mixpanel.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1164,7 +1201,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["segment.io"],
+      "requestDomains": [
+        "segment.io"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1189,7 +1228,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["amplitude.com"],
+      "requestDomains": [
+        "amplitude.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1214,7 +1255,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["sentry.io"],
+      "requestDomains": [
+        "sentry.io"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1239,7 +1282,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["telemetry.microsoft.com"],
+      "requestDomains": [
+        "telemetry.microsoft.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1264,7 +1309,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["events.data.microsoft.com"],
+      "requestDomains": [
+        "events.data.microsoft.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1289,7 +1336,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["app-measurement.com"],
+      "requestDomains": [
+        "app-measurement.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1314,7 +1363,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["yandex.ru"],
+      "requestDomains": [
+        "yandex.ru"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1339,7 +1390,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["crashlytics.com"],
+      "requestDomains": [
+        "crashlytics.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1364,7 +1417,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["klaviyo.com"],
+      "requestDomains": [
+        "klaviyo.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1389,7 +1444,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["yotpo.com"],
+      "requestDomains": [
+        "yotpo.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1414,7 +1471,9 @@
       "type": "block"
     },
     "condition": {
-      "requestDomains": ["bazaarvoice.com"],
+      "requestDomains": [
+        "bazaarvoice.com"
+      ],
       "resourceTypes": [
         "main_frame",
         "sub_frame",
@@ -1449,7 +1508,13 @@
         "www.redditstatic.com",
         "static.ads-twitter.com"
       ],
-      "resourceTypes": ["script", "image", "xmlhttprequest", "ping", "other"]
+      "resourceTypes": [
+        "script",
+        "image",
+        "xmlhttprequest",
+        "ping",
+        "other"
+      ]
     }
   },
   {
@@ -1460,7 +1525,12 @@
     },
     "condition": {
       "urlFilter": "facebook.com/tr",
-      "resourceTypes": ["image", "xmlhttprequest", "ping", "other"]
+      "resourceTypes": [
+        "image",
+        "xmlhttprequest",
+        "ping",
+        "other"
+      ]
     }
   },
   {
@@ -1471,7 +1541,11 @@
     },
     "condition": {
       "urlFilter": "advibe.click/analytics/collect",
-      "resourceTypes": ["xmlhttprequest", "ping", "other"]
+      "resourceTypes": [
+        "xmlhttprequest",
+        "ping",
+        "other"
+      ]
     }
   },
   {
@@ -1482,7 +1556,11 @@
     },
     "condition": {
       "urlFilter": "dev.siliconsquire.com/matomo.js",
-      "resourceTypes": ["script", "xmlhttprequest", "other"]
+      "resourceTypes": [
+        "script",
+        "xmlhttprequest",
+        "other"
+      ]
     }
   },
   {
@@ -1495,7 +1573,6 @@
       "requestDomains": [
         "vac.peacocktv.com",
         "sas.peacocktv.com",
-        "fwmrm.net",
         "video-ads-module.ad-tech.nbcuni.com",
         "identity.mparticle.com",
         "census-app.scorecardresearch.com",
@@ -1579,7 +1656,10 @@
     },
     "condition": {
       "urlFilter": "?",
-      "resourceTypes": ["main_frame", "sub_frame"]
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame"
+      ]
     }
   },
   {
@@ -1590,7 +1670,11 @@
     },
     "condition": {
       "regexFilter": "^https?://[a-z0-9.-]+\\.mediatailor\\.[a-z0-9.-]+\\.amazonaws\\.com/",
-      "resourceTypes": ["xmlhttprequest", "media", "other"]
+      "resourceTypes": [
+        "xmlhttprequest",
+        "media",
+        "other"
+      ]
     }
   },
   {
@@ -1601,7 +1685,10 @@
     },
     "condition": {
       "regexFilter": "^https?://g[0-9]{1,4}-(vod|sf|sle)-us-cmaf-prd-(fy|mc)(-[a-z0-9]+)?\\.cdn\\.peacocktv\\.com/",
-      "resourceTypes": ["media", "xmlhttprequest"]
+      "resourceTypes": [
+        "media",
+        "xmlhttprequest"
+      ]
     }
   },
   {
@@ -1612,7 +1699,10 @@
     },
     "condition": {
       "regexFilter": "^https?://g[0-9]{1,4}-[a-z0-9]+-us-cmaf-prd-ns[a-z0-9-]*\\.prd\\.pck\\.netskrt\\.net/",
-      "resourceTypes": ["media", "xmlhttprequest"]
+      "resourceTypes": [
+        "media",
+        "xmlhttprequest"
+      ]
     }
   },
   {
@@ -1623,7 +1713,30 @@
     },
     "condition": {
       "regexFilter": "^https?://g[0-9]{1,4}-[a-z0-9]+-us-cmaf-prd-[a-z0-9-]+\\.prd\\.pck\\.netskrt\\.net/",
-      "resourceTypes": ["media", "xmlhttprequest"]
+      "resourceTypes": [
+        "media",
+        "xmlhttprequest"
+      ]
+    }
+  },
+  {
+    "id": 49,
+    "priority": 100,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "fwmrm.net"
+      ],
+      "initiatorDomains": [
+        "peacocktv.com"
+      ],
+      "resourceTypes": [
+        "image",
+        "xmlhttprequest",
+        "other"
+      ]
     }
   }
 ]
