@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
     peacockDiagnosticsStatus.textContent = result.enabled
-      ? `Capture is ON · ${result.count} events recorded (maximum 2,000).`
+      ? `Capture is ON · ${result.count} events recorded (maximum 1,000).`
       : `Capture is OFF · ${result.count} saved events.`;
     peacockDiagnosticsToggle.textContent = result.enabled ? "Stop capture" : "Start capture";
     peacockDiagnosticsToggle.className = result.enabled ? "btn-warning" : "btn-primary";
