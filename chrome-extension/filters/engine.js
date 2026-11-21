@@ -251,7 +251,7 @@
         // Old IndexedDB records may still contain noopmp4 redirects from
         // earlier extension versions. Ignore them even before a list refresh.
         network: (Array.isArray(record.parsed.network) ? record.parsed.network : [])
-          .filter((rule) => !rule || !rule.redirect)
+          .filter((rule) => rule && !rule.redirect)
       }));
     parsedListsCacheKey = key;
     return parsedListsCache;
