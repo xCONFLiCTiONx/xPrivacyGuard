@@ -729,7 +729,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 });
 
 // Temporary, opt-in Peacock request diagnostics. This observes traffic only; it never changes requests.
-const PEACOCK_DIAGNOSTICS_MAX_EVENTS = 2000;
+const PEACOCK_DIAGNOSTICS_MAX_EVENTS = 1000;
 let peacockDiagnosticsEnabled = false;
 let peacockDiagnosticsWriteQueue = Promise.resolve();
 
@@ -747,11 +747,20 @@ function isPeacockHost(hostname) {
   return host === "peacocktv.com" || host.endsWith(".peacocktv.com");
 }
 
-function peacockRequestContext(details) {
+async function peacockRequestContext(details) {
   for (const candidate of [details.initiator, details.documentUrl]) {
     if (!candidate || candidate === "null") continue;
     try {
       const parsed = new URL(candidate);
+      if (isPeacockHost(parsed.hostname)) return parsed.origin;
+    } catch (_) {}
+  }
+  // A cross-origin player iframe may initiate media requests. Confirm the
+  // top-level tab is Peacock before including those requests.
+  if (typeof details.tabId === "number" && details.tabId >= 0 && chrome.tabs && chrome.tabs.get) {
+    try {
+      const tab = await chrome.tabs.get(details.tabId);
+      const parsed = new URL(tab.url || "");
       if (isPeacockHost(parsed.hostname)) return parsed.origin;
     } catch (_) {}
   }
@@ -767,9 +776,9 @@ function sanitizePeacockRequestUrl(value) {
     }
     url.username = "";
     url.password = "";
-    return url.href.slice(0, 8192);
+    return url.href.slice(0, 4096);
   } catch (_) {
-    return String(value || "").slice(0, 8192);
+    return String(value || "").slice(0, 4096);
   }
 }
 
@@ -783,9 +792,9 @@ function classifyPeacockRequest(details) {
   return "other";
 }
 
-function recordPeacockDiagnostic(details, outcome) {
+async function recordPeacockDiagnostic(details, outcome) {
   if (!peacockDiagnosticsEnabled || !details || details.tabId < 0) return;
-  const initiator = peacockRequestContext(details);
+  const initiator = await peacockRequestContext(details);
   if (!initiator) return;
   const responseHeaders = {};
   for (const header of details.responseHeaders || []) {
