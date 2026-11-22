@@ -404,7 +404,6 @@
         "qevents.quora.com",
         "px.srvcs.tumblr.com",
         "ads.vk.com",
-        "vk.com",
         "ad.mail.ru",
         "top-fwz1.mail.ru",
         "advertising.apple.com",
@@ -544,7 +543,56 @@
         "metrics.brightcove.com",
         "s.innovid.com",
         "tremorhub.com",
-        "ads.tremorhub.com"
+        "ads.tremorhub.com",
+        "fwmrm.net",
+        "v.fwmrm.net",
+        "29773.v.fwmrm.net",
+        "user-sync.fwmrm.net",
+        "imasdk.googleapis.com",
+        "doubleclick.net",
+        "googlesyndication.com",
+        "pck.netskrt.net",
+        "nr-data.net",
+        "bam.dualstack.nr-data.net",
+        "cws.conviva.com",
+        "conviva.com",
+        "scorecardresearch.com",
+        "sas.peacocktv.com",
+        "nbcuas.com",
+        "imrworldwide.com",
+        "demdex.net",
+        "pointmediatracker.com",
+        "tq-tungsten.com",
+        "flashtalking.com",
+        "extremereach.io",
+        "tvp.tv",
+        "vaultdcr.com",
+        "innovid.com",
+        "rtr.innovid.com",
+        "vtrk.dv.tech",
+        "imtwjwoasak.com",
+        "imtwjwoasak-pmi-pixel-origin.s3.amazonaws.com",
+        "mssl.fwmrm.net",
+        "bea4.v.fwmrm.net",
+        "2975c.v.fwmrm.net",
+        "test-ad.xprivacyguard.local",
+        "tracker-test.xprivacyguard.local",
+        "ad-banner.test",
+        "adservice.test",
+        "tracker.test",
+        "telemetry.test",
+        "analytics.test",
+        "doh-bypass.test",
+        "cloudflare-dns.com",
+        "dns.google",
+        "dns.quad9.net",
+        "doh.opendns.com",
+        "doh.cleanbrowsing.org",
+        "dns.adguard.com",
+        "events.data.microsoft.com",
+        "feedback.windows.com",
+        "ssettings-win.data.microsoft.com",
+        "diagnostics.support.microsoft.com"
       ],
       "resourceTypes": [
         "main_frame",
@@ -572,7 +620,8 @@
     "condition": {
       "requestDomains": [
         "assets.adobedtm.com",
-        "ingest.webcol.sdp.peacocktv.com"
+        "ingest.webcol.sdp.peacocktv.com",
+        "ads.production-public.tubi.io"
       ],
       "resourceTypes": [
         "main_frame",
@@ -1684,7 +1733,7 @@
       "type": "block"
     },
     "condition": {
-      "regexFilter": "^https?://g[0-9]{1,4}-(vod|sf|sle)-us-cmaf-prd-(fy|mc)(-[a-z0-9]+)?\\.cdn\\.peacocktv\\.com/(dai/|.*[?&]requestVamAPI=true)",
+      "regexFilter": "^https?://g[0-9]{1,4}-(vod|sf|sle)-us-cmaf-prd-(fy|mc)(-[a-z0-9]+)?\\.cdn\\.peacocktv\\.com/(dai/|intpsfvod/|.*[?&](requestVamAPI=true|vam_params=))",
       "resourceTypes": [
         "media",
         "xmlhttprequest"
@@ -1693,62 +1742,443 @@
   },
   {
     "id": 47,
-    "priority": 2,
-    "action": {
-      "type": "allow"
-    },
-    "condition": {
-      "regexFilter": "^https?://g[0-9]{1,4}-[a-z0-9]+-us-cmaf-prd-ns[a-z0-9-]*\\.prd\\.pck\\.netskrt\\.net/",
-      "resourceTypes": [
-        "media",
-        "xmlhttprequest"
-      ]
-    }
-  },
-  {
-    "id": 48,
-    "priority": 1,
-    "action": {
-      "type": "block"
-    },
-    "condition": {
-      "regexFilter": "^https?://g[0-9]{1,4}-[a-z0-9]+-us-cmaf-prd-[a-z0-9-]+\\.prd\\.pck\\.netskrt\\.net/",
-      "resourceTypes": [
-        "media",
-        "xmlhttprequest"
-      ]
-    }
-  },
-  {
-    "id": 49,
-    "priority": 3,
-    "action": {
-      "type": "block"
-    },
-    "condition": {
-      "regexFilter": "^https?://g[0-9]{1,4}-[a-z0-9]+-us-cmaf-prd-[a-z0-9-]+\\.prd\\.pck\\.netskrt\\.net/(dai/|.*[?&]requestVamAPI=true)",
-      "resourceTypes": [
-        "media",
-        "xmlhttprequest"
-      ]
-    }
-  },
-  {
-    "id": 50,
-    "priority": 100,
+    "priority": 300,
     "action": {
       "type": "block"
     },
     "condition": {
       "requestDomains": [
-        "fwmrm.net"
-      ],
-      "initiatorDomains": [
-        "peacocktv.com"
+        "fwmrm.net",
+        "7f077.v.fwmrm.net",
+        "ads.pluto.tv",
+        "advertising.pluto.tv",
+        "tracking.pluto.tv",
+        "analytics.pluto.tv",
+        "o.pluto.tv",
+        "sparrow.pluto.tv",
+        "k.pluto.tv",
+        "extremereach.io",
+        "doubleclick.net",
+        "ade.googlesyndication.com",
+        "doubleverify.com",
+        "dv.tech",
+        "adsafeprotected.com",
+        "innovid.com",
+        "agkn.com",
+        "imtwjwoasak.com",
+        "ispot.tv",
+        "hrzn-nxt.com",
+        "videoamp.com",
+        "b.videoamp.com",
+        "browser-intake-datadoghq.com",
+        "conviva.com",
+        "cws.conviva.com",
+        "ketchcdn.com",
+        "global.ketchcdn.com",
+        "trafficjunky.com",
+        "trafficjunky.net",
+        "tjcdn.com",
+        "pt.trafficjunky.com",
+        "delivery.trafficjunky.com",
+        "ads.trafficjunky.net",
+        "tsyndicate.com",
+        "exoclick.com",
+        "juicyads.com",
+        "ht.pornhub.com",
+        "et.pornhub.com",
+        "wt.pornhub.com",
+        "ts.pornhub.com",
+        "googlesyndication.com",
+        "google-analytics.com",
+        "googletagmanager.com",
+        "adnxs.com",
+        "openx.net",
+        "rubiconproject.com",
+        "pubmatic.com",
+        "criteo.com",
+        "scorecardresearch.com",
+        "hotjar.com",
+        "segment.io",
+        "newrelic.com",
+        "onesignal.com",
+        "analytics-ingestion-v3.main-production-custom.production.k8s.tubi.io",
+        "pointmediatracker.com",
+        "flashtalking.com",
+        "tvp.tv",
+        "trafficfactory.biz",
+        "trafficfactory.com",
+        "as.trafficfactory.biz",
+        "ad.trafficfactory.biz",
+        "exdynsrv.com",
+        "adxadserv.com",
+        "syndication.exoclick.com",
+        "main.exoclick.com",
+        "static.exoclick.com",
+        "poweredby.juicyads.com",
+        "delivery.juicyads.com",
+        "adxpansion.com",
+        "ero-advertising.com",
+        "popcash.net",
+        "popads.net",
+        "runative-syndicate.com",
+        "trk.xvideos.com",
+        "a.xvideos.com",
+        "analytics.xvideos.com"
       ],
       "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "stylesheet",
+        "script",
         "image",
+        "font",
+        "object",
         "xmlhttprequest",
+        "ping",
+        "csp_report",
+        "media",
+        "websocket",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 48,
+    "priority": 200,
+    "action": {
+      "type": "allow"
+    },
+    "condition": {
+      "urlFilter": "||mcdn.tubitv.com/js/ads.js",
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "stylesheet",
+        "script",
+        "image",
+        "font",
+        "object",
+        "xmlhttprequest",
+        "ping",
+        "csp_report",
+        "media",
+        "websocket",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 49,
+    "priority": 300,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "||tubitv.com/token/analytics-ingestion/",
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "stylesheet",
+        "script",
+        "image",
+        "font",
+        "object",
+        "xmlhttprequest",
+        "ping",
+        "csp_report",
+        "media",
+        "websocket",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 50,
+    "priority": 300,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/resources/noop.mp4"
+      }
+    },
+    "condition": {
+      "urlFilter": "||ark.tubi.video/v2/*.mp4",
+      "resourceTypes": [
+        "media"
+      ]
+    }
+  },
+  {
+    "id": 51,
+    "priority": 300,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "||k.pluto.tv/?category=ad",
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "stylesheet",
+        "script",
+        "image",
+        "font",
+        "object",
+        "xmlhttprequest",
+        "ping",
+        "csp_report",
+        "media",
+        "websocket",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 52,
+    "priority": 100,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "||vk.com/rtrg^",
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "stylesheet",
+        "script",
+        "image",
+        "font",
+        "object",
+        "xmlhttprequest",
+        "ping",
+        "csp_report",
+        "media",
+        "websocket",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 53,
+    "priority": 100,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "*/ads.js",
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "stylesheet",
+        "script",
+        "image",
+        "font",
+        "object",
+        "xmlhttprequest",
+        "ping",
+        "csp_report",
+        "media",
+        "websocket",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 54,
+    "priority": 100,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "*/pagead.js",
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "stylesheet",
+        "script",
+        "image",
+        "font",
+        "object",
+        "xmlhttprequest",
+        "ping",
+        "csp_report",
+        "media",
+        "websocket",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 55,
+    "priority": 100,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "*/advertisement.js",
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "stylesheet",
+        "script",
+        "image",
+        "font",
+        "object",
+        "xmlhttprequest",
+        "ping",
+        "csp_report",
+        "media",
+        "websocket",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 56,
+    "priority": 100,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "*/analytics.js",
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "stylesheet",
+        "script",
+        "image",
+        "font",
+        "object",
+        "xmlhttprequest",
+        "ping",
+        "csp_report",
+        "media",
+        "websocket",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 57,
+    "priority": 100,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "*/intpsfvod/*",
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "stylesheet",
+        "script",
+        "image",
+        "font",
+        "object",
+        "xmlhttprequest",
+        "ping",
+        "csp_report",
+        "media",
+        "websocket",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 58,
+    "priority": 100,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "*vam_params=*",
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "stylesheet",
+        "script",
+        "image",
+        "font",
+        "object",
+        "xmlhttprequest",
+        "ping",
+        "csp_report",
+        "media",
+        "websocket",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 59,
+    "priority": 100,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "*&requestVamAPI=true*",
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "stylesheet",
+        "script",
+        "image",
+        "font",
+        "object",
+        "xmlhttprequest",
+        "ping",
+        "csp_report",
+        "media",
+        "websocket",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 60,
+    "priority": 100,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "*?requestVamAPI=true",
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "stylesheet",
+        "script",
+        "image",
+        "font",
+        "object",
+        "xmlhttprequest",
+        "ping",
+        "csp_report",
+        "media",
+        "websocket",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 61,
+    "priority": 100,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "*/dai/pub/global/*",
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "stylesheet",
+        "script",
+        "image",
+        "font",
+        "object",
+        "xmlhttprequest",
+        "ping",
+        "csp_report",
+        "media",
+        "websocket",
         "other"
       ]
     }
