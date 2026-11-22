@@ -1733,7 +1733,7 @@
       "type": "block"
     },
     "condition": {
-      "regexFilter": "^https?://g[0-9]{1,4}-(vod|sf|sle)-us-cmaf-prd-(fy|mc)(-[a-z0-9]+)?\\.cdn\\.peacocktv\\.com/(dai/|intpsfvod/|.*[?&](requestVamAPI=true|vam_params=))",
+      "regexFilter": "^https?://[^/]+\\.cdn\\.peacocktv\\.com/(dai|intpsfvod)/",
       "resourceTypes": [
         "media",
         "xmlhttprequest"
