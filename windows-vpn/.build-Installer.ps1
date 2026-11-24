@@ -78,7 +78,9 @@ $issLines = @(
     "#define AppName        `"$appName`"",
     "#define AppFolderName  `"$folderName`"",
     "#define AppVersion     `"$version`"",
-    "#define AppPublisher   `"xPrograms`"",
+    "#define AppPublisher   `"xCONFLiCTiONx`"",
+    "#define AppURL         `"https://xconflictionx.cc`"",
+    "#define AppContact     `"info@xconflictionx.cc`"",
     "#define AppExeName     `"$exeName`"",
     "#define AppId          `"$appId`"",
     "#define AppDescription `"$description`"",
@@ -91,6 +93,10 @@ $issLines = @(
     "AppVersion={#AppVersion}",
     "AppVerName={#AppName} {#AppVersion}",
     "AppPublisher={#AppPublisher}",
+    "AppPublisherURL={#AppURL}",
+    "AppSupportURL={#AppURL}",
+    "AppUpdatesURL={#AppURL}",
+    "AppContact={#AppContact}",
     "AppComments={#AppDescription}",
     "DefaultDirName={localappdata}\xPrograms\{#AppFolderName}",
     "DefaultGroupName=xPrograms",
@@ -179,6 +185,24 @@ if (-not $compiled) {
 
 $finalExe = Join-Path $OutputDir "$installerBase.exe"
 Copy-Item -Path $stagedExe -Destination $finalExe -Force
+
+# Sign installer with xCONFLiCTiONx code-signing certificate if available
+$signCert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert -ErrorAction SilentlyContinue |
+    Where-Object { $_.Subject -match 'CN=xCONFLiCTiONx' } |
+    Sort-Object NotAfter -Descending | Select-Object -First 1
+$signTool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Filter signtool.exe -Recurse -ErrorAction SilentlyContinue |
+    Where-Object { $_.FullName -match '\\x64\\' } | Sort-Object FullName -Descending | Select-Object -First 1
+if ($signCert -and $signTool) {
+    Write-Host "==> Signing $finalExe with xCONFLiCTiONx ($($signCert.Thumbprint))..." -ForegroundColor Cyan
+    & $signTool.FullName sign /sha1 $signCert.Thumbprint /fd SHA256 /d "$appName Setup" /du "https://xconflictionx.cc" /tr "http://timestamp.digicert.com" /td SHA256 $finalExe
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "    Timestamp server unavailable; signing without timestamp..." -ForegroundColor Yellow
+        & $signTool.FullName sign /sha1 $signCert.Thumbprint /fd SHA256 /d "$appName Setup" /du "https://xconflictionx.cc" $finalExe
+        if ($LASTEXITCODE -ne 0) { throw "signtool failed with exit code $LASTEXITCODE" }
+    }
+    Write-Host "[OK] Signed installer: $finalExe" -ForegroundColor Green
+}
+
 Write-Host "[OK] Installer created at: $finalExe" -ForegroundColor Green
 
 if ($Install) {

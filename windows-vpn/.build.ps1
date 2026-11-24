@@ -49,4 +49,22 @@ if (Test-Path $iconSrc) {
     Copy-Item $iconSrc -Destination (Join-Path $installDir "icon.ico") -Force
 }
 
+# Sign xPrivacyGuard.exe if xCONFLiCTiONx code-signing cert is available
+$signCert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert -ErrorAction SilentlyContinue |
+    Where-Object { $_.Subject -match 'CN=xCONFLiCTiONx' } |
+    Sort-Object NotAfter -Descending | Select-Object -First 1
+$signTool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Filter signtool.exe -Recurse -ErrorAction SilentlyContinue |
+    Where-Object { $_.FullName -match '\\x64\\' } | Sort-Object FullName -Descending | Select-Object -First 1
+if ($signCert -and $signTool) {
+    foreach ($targetExe in @((Join-Path $artifactsDir "xPrivacyGuard.exe"), (Join-Path $installDir "xPrivacyGuard.exe"))) {
+        if (Test-Path $targetExe) {
+            & $signTool.FullName sign /sha1 $signCert.Thumbprint /fd SHA256 /d "xPrivacyGuard" /du "https://xconflictionx.cc" /tr "http://timestamp.digicert.com" /td SHA256 $targetExe | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                & $signTool.FullName sign /sha1 $signCert.Thumbprint /fd SHA256 /d "xPrivacyGuard" /du "https://xconflictionx.cc" $targetExe | Out-Null
+            }
+        }
+    }
+    Write-Host "[OK] Signed xPrivacyGuard.exe with xCONFLiCTiONx ($($signCert.Thumbprint))" -ForegroundColor Green
+}
+
 Write-Host "[OK] Deployed xPrivacyGuard to $installDir" -ForegroundColor Green
