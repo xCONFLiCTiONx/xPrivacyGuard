@@ -1,39 +1,21 @@
 # xPrivacyGuard
 
-> **Comprehensive Privacy, Network Filtering, & Anti-Fingerprinting Suite**
+Unified privacy, Zero Trust VPN, ad/tracker filtering, and browser protection suite.
 
-**xPrivacyGuard** is an end-to-end multi-platform privacy ecosystem that protects your network traffic and web browsing across mobile and desktop devices. It combines a native **Android Privacy Firewall & Local VPN App**,  and an advanced **Desktop Browser Extension**.
+## Modules
 
----
+| Directory | Component | Build / Deploy |
+|---|---|---|
+| `android-vpn/` | **xPrivacyGuard (Android)** — Cloudflare One MASQUE & WireGuard VPN, Zero Trust DNS, per-app split tunnel, and filter engine | `.\android-vpn\.build.ps1` |
+| `android-vpn-lite/` | **xPrivacyGuard Lite (Android)** — Lightweight local DNS firewall & ad blocker | `.\android-vpn-lite\.build.ps1` |
+| `windows-vpn/` | **xPrivacyGuard (Windows)** — Always-on Cloudflare One MASQUE VPN, Wintun + WFP kill switch, split-tunnel exclusions | `.\windows-vpn\.build.ps1` / `.\windows-vpn\.build-Installer.ps1` |
+| `chrome-extension/` | **xPrivacyGuard (Chrome Extension)** — Fingerprint protection, GPC, cosmetic/network ad & tracker blocking | `.\chrome-extension\.build.ps1` |
+| `privacy-filters/` | **Privacy Filters** — Curated filter lists hosted at `https://filters.home.xconflictionx.cc/<list>/filters.txt` | Synced to xServer |
+| `assets/` | **Unified Brand Assets** — Canonical `icon.svg`, `icon-512.png`, and `icon.ico` shared across all platforms | — |
 
-## 📱 1. Android Privacy Firewall & Encrypted DNS App
+## Design System
 
-Located in [`app/`](file:///E:/xPrivacyGuard/app), **xPrivacyGuard for Android** is a high-performance local privacy firewall and encrypted DNS proxy app built using Kotlin, Jetpack Compose (Material 3), and Android's native `VpnService` loopback interface. It operates 100% on-device for privacy without routing your internet traffic through external VPN servers.
-
-### 🌟 Key Features
-
-- **Local Privacy Loopback Engine (`VpnService`)**: Intercepts and filters IPv4 / IPv6 DNS traffic (UDP/TCP Port 53) locally on-device. All standard data traffic remains direct and untouched.
-- **Embedded DNS Proxy Engine (DoT)**: Proxies DNS queries securely over **DNS-over-TLS (DoT, Port 853)** with zero-leak protection and instant `NXDOMAIN` spoofing for blocked domains. Ships with pre-configured high-security DoT gateways including Cloudflare Security (`security.cloudflare-dns.com`), AdGuard DNS, Quad9, Mullvad, and Control D.
-- **Remote Filter List & Blocklist Engine**:
-  - Subscribes to and downloads remote AdBlock / Hosts lists (AdGuard, StevenBlack, OISD, etc.) with automatic background updates, caching, and debounced auto-apply.
-  - Supports custom remote filter list URLs, domain syntax, and wildcard rule matching.
-  - Custom user blocklists and allowlists.
-- **Per-App Firewall & Split Tunneling**: Toggle internet access per installed application, or exclude specific apps from the VPN tunnel.
-- **Real-Time Analytics & Diagnostics**:
-  - Live query logging with domain resolution status (Allowed vs. Blocked).
-  - Built-in DNS Leak Tester (`LeakTester`).
-  - Active `VpnWatchdog` for automatic connection healing and stalled tunnel detection.
-  - Integrated filtering self-test against the running proxy engine.
-- **Automations & System Integration**: Android boot receiver (`RECEIVE_BOOT_COMPLETED`), network change listeners, and background foreground service notifications.
-
-### 🛠️ Building & Running (Android App)
-
-1. Open `E:/xPrivacyGuard` (or the project root) in **Android Studio**.
-2. Ensure you have Android SDK 34 (Android 14) installed.
-3. Build & run the project via Android Studio, or execute:
-   ```bash
-   ./gradlew assembleDebug
-   ```
-4. Install `app-debug.apk` onto your device or emulator and grant the VPN permission on first launch.
-
----
+All components share a single unified developer dark theme and icon:
+- **Background**: `#121214` / Surface `#1A1A1E` / Elevated `#222227` / Border `#2C2C33`
+- **Accent**: `#F38020` (highlight `#FAAD3F`)
+- **Status Colors**: Connected / Success `#22C55E` (Green) · Connecting / Warning `#FAAD3F` (Orange/Yellow) · Disconnected / Error `#EF4444` (Red)

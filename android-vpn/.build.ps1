@@ -42,7 +42,7 @@ if ($env:ANDROID_HOME) {
 # release keystore when supplied; otherwise the app's build config uses the
 # local Android debug keystore for a locally installable Release APK.
 Write-Host "==> Building Release APK..." -ForegroundColor Cyan
-& .\gradlew.bat :app:assembleRelease
+& .\gradlew.bat :app:assembleRelease --no-build-cache --no-watch-fs
 if ($LASTEXITCODE -ne 0) {
     throw "Gradle $BuildVariant build failed with exit code $LASTEXITCODE"
 }
