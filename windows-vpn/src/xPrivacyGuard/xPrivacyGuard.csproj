@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>xPrivacyGuard</AssemblyName>
+    <RootNamespace>xPrivacyGuard</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\xprivacyguard.ico</ApplicationIcon>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="Assets\xprivacyguard.ico" />
+    <Resource Include="Assets\xprivacyguard.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\native\bin\win-x64\aether.dll" Condition="Exists('..\..\native\bin\win-x64\aether.dll')" CopyToOutputDirectory="PreserveNewest" Link="aether.dll" />
+    <None Include="..\..\native\bin\win-x64\wintun.dll" Condition="Exists('..\..\native\bin\win-x64\wintun.dll')" CopyToOutputDirectory="PreserveNewest" Link="wintun.dll" />
+  </ItemGroup>
+</Project>

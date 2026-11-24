@@ -1,0 +1,90 @@
+! Title: xPrivacy Guard - Tubi Network Ad & Tracker Blocker (Enhanced v3)
+! Description: Comprehensive network filters for Tubi ad injection, video ads, tracking pixels, and telemetry.
+! Note: Do not block stitched video segments on nc-aka2.tubi.video or ark.tubi.video; 
+! hard-blocking core video delivery causes playback failure.
+
+! ============================================================
+! AMAZON ADS & TRACKING INFRASTRUCTURE
+! ============================================================
+||amazon-adsystem.com^
+||pointmediatracker.com^
+
+! ============================================================
+! TUNGSTEN / BTD AD ANALYTICS
+! ============================================================
+||tq-tungsten.com^
+
+! ============================================================
+! FLASHTALKING AD SERVER & AD INJECTION
+! ============================================================
+||flashtalking.com^
+
+! ============================================================
+! EXTREME REACH VIDEO AD SERVING & BEACONS
+! ============================================================
+||extremereach.io^
+
+! ============================================================
+! TVP TRACKING & ANALYTICS
+! ============================================================
+||tvp.tv^
+
+! ============================================================
+! TATARI TV AD ATTRIBUTION & TELEMETRY
+! ============================================================
+||vaultdcr.com^
+
+! ============================================================
+! INNOVID VIDEO AD SERVING & MEASUREMENT
+! ============================================================
+||innovid.com^
+||s.innovid.com^
+||rtr.innovid.com^
+
+! ============================================================
+! THE TRADE DESK (ADSRVR) BIDDING & TRACKING
+! ============================================================
+||adsrvr.org^
+
+! ============================================================
+! AD VERIFICATION, AUDIENCE & MEASUREMENT (DoubleVerify, Nielsen, etc.)
+! ============================================================
+||doubleverify.com^
+||vtrk.dv.tech^
+||imrworldwide.com^
+||imtwjwoasak.com^
+||imtwjwoasak-pmi-pixel-origin.s3.amazonaws.com^
+
+! ============================================================
+! GOOGLE AD INFRASTRUCTURE
+! ============================================================
+||doubleclick.net^
+
+! ============================================================
+! TUBI NATIVE AD PIXELS & TELEMETRY
+! ============================================================
+! NOTE: Do not block ads.production-public.tubi.io (Tubi ad-decision service).
+! Ads are server-side stitched; blocking it only triggers the anti-adblock wall.
+@@||ads.production-public.tubi.io^
+! Anti-adblock bait: Tubi checks that this file loads; generic /ads.js rules block it.
+@@||mcdn.tubitv.com/js/ads.js
+||tubitv.com/token/analytics-ingestion/$important
+||analytics-ingestion-v3.main-production-custom.production.k8s.tubi.io^$important
+
+! ============================================================
+! OVERRIDE ALLOWLISTING (these were blocked, then re-allowed by another rule)
+! $important makes the block win over @@ exceptions.
+! ============================================================
+||pointmediatracker.com^$important
+||flashtalking.com^$important
+||extremereach.io^$important
+||tvp.tv^$important
+
+! ============================================================
+! TUBI AD CREATIVES
+! Content streams as HLS (.m3u8/.ts); ad pods are progressive MP4s
+! (e.g. /v2/<hash>/<uuid>/854x480_900k.mp4). Redirect to a 0.05s silent
+! noop MP4 instead of hard-blocking so the player finishes the ad pod cleanly
+! without pausing and retrying every 10 seconds.
+! ============================================================
+||ark.tubi.video/v2/*.mp4$media,redirect=noopmp4,important

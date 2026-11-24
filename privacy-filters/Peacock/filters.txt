@@ -1,0 +1,48 @@
+! Title: xPrivacy Guard - Peacock Future-Proofed Network Ad Blocker
+! Description: Generalized ad-shard wildcards, FreeWheel ad injection servers, and telemetry.
+
+! ============================================================
+! FREEWHEEL AD SERVER & AD INJECTION
+! ============================================================
+||fwmrm.net^
+||v.fwmrm.net^
+||29773.v.fwmrm.net^
+||user-sync.fwmrm.net^
+||dai.google.com^
+||imasdk.googleapis.com^
+||doubleclick.net^
+||googlesyndication.com^
+
+! ============================================================
+! GENERALIZED AD SHARDS & PRE-ROLL CDN TARGETS (Wildcarded)
+! Note: Do not block entire *-fy / *-mc .cdn.peacocktv.com hosts,
+! as Peacock serves the clean fallback /pub/global/.../master_cmaf.mpd
+! from them. Block only DAI / VAM / intpsfvod ad-stitched paths below.
+! ============================================================
+||pck.netskrt.net^
+*.pck.netskrt.net^
+
+! ============================================================
+! TELEMETRY & AD VERIFICATION
+! ============================================================
+||nr-data.net^
+||bam.dualstack.nr-data.net^
+||cws.conviva.com^
+||conviva.com^
+||scorecardresearch.com^
+||omtrdc.net^
+||vac.peacocktv.com^
+||sas.peacocktv.com^
+||nbcuas.com^
+||imrworldwide.com^
+||demdex.net^
+||adsrvr.org^
+
+! ============================================================
+! DYNAMIC AD INSERTION (DAI) & VAM MANIFEST BLOCKING
+! ============================================================
+*?requestVamAPI=true
+*&requestVamAPI=true*
+*/dai/pub/global/*
+*/intpsfvod/*
+*vam_params=*

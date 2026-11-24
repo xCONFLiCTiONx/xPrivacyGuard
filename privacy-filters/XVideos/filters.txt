@@ -1,0 +1,73 @@
+! Title: xPrivacy Guard - XVideos Ad & Tracker Protection
+! Description: Network and cosmetic filters for XVideos ads, tracking, and telemetry without breaking CDN assets or playback.
+! Note: Do not block xvideos-cdn.com or xv-cdn.com; XVideos serves player scripts, CSS, and video streams from these CDNs.
+
+! ============================================================
+! TRAFFICFACTORY & AD SERVERS
+! ============================================================
+||trafficfactory.biz^$important
+||trafficfactory.com^$important
+||as.trafficfactory.biz^$important
+||ad.trafficfactory.biz^$important
+
+! ============================================================
+! THIRD-PARTY AD EXCHANGES & POPUPS
+! ============================================================
+||exoclick.com^$important
+||exdynsrv.com^$important
+||adxadserv.com^$important
+||syndication.exoclick.com^$important
+||main.exoclick.com^$important
+||static.exoclick.com^$important
+||juicyads.com^$important
+||poweredby.juicyads.com^$important
+||delivery.juicyads.com^$important
+||adxpansion.com^$important
+||ero-advertising.com^$important
+||popcash.net^$important
+||popads.net^$important
+||runative-syndicate.com^$important
+
+! ============================================================
+! XVIDEOS TELEMETRY & TRACKING
+! ============================================================
+||trk.xvideos.com^$important
+||a.xvideos.com^$important
+||analytics.xvideos.com^$important
+
+! ============================================================
+! GENERAL AD NETWORKS & TRACKERS
+! ============================================================
+||doubleclick.net^$important
+||googlesyndication.com^$important
+||google-analytics.com^$important
+||googletagmanager.com^$important
+||adnxs.com^$important
+||openx.net^$important
+||rubiconproject.com^$important
+||pubmatic.com^$important
+||criteo.com^$important
+||scorecardresearch.com^$important
+||hotjar.com^$important
+||segment.io^$important
+||newrelic.com^$important
+||onesignal.com^$important
+
+! ============================================================
+! COSMETIC AD & PROMO BLOCKING (Preserves Core Layout & UI)
+! ============================================================
+xvideos.com##.video-ad
+xvideos.com##.ad-header
+xvideos.com##.ad-footer
+xvideos.com##div[id^="ad-"]
+xvideos.com##div[id^="ad_"]
+xvideos.com##div[class*="ad-container"]
+xvideos.com##.sponsor-banner
+xvideos.com##.sponsor-label
+xvideos.com##.ad-link
+xvideos.com##iframe[src*="trafficfactory"]
+xvideos.com##iframe[src*="exoclick"]
+xvideos.com##iframe[src*="juicyads"]
+xvideos.com##iframe[src*="ero-advertising"]
+xvideos.com##[id^="ad-provider-"]
+xvideos.com##[class^="ad-provider-"]

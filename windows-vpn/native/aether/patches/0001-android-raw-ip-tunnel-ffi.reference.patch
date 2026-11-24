@@ -1,0 +1,312 @@
+diff --git a/aether/src/ffi.rs b/aether/src/ffi.rs
+index dac5666..6ee1085 100644
+--- a/aether/src/ffi.rs
++++ b/aether/src/ffi.rs
+@@ -2,10 +2,11 @@
+ 
+ use std::collections::HashMap;
+ use std::ffi::{c_char, CStr, CString};
+-use std::net::SocketAddr;
++use std::net::{IpAddr, SocketAddr};
+ use std::panic::{catch_unwind, AssertUnwindSafe};
+-use std::sync::atomic::{AtomicU64, Ordering};
++use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+ use std::sync::{Arc, OnceLock};
++use std::time::Duration;
+ 
+ use futures::FutureExt;
+ use parking_lot::Mutex;
+@@ -623,6 +624,293 @@ pub extern "C" fn aether_team_token_clear() -> *mut c_char {
+     })
+ }
+ 
++struct RawTunnel {
++    outbound_tx: tokio::sync::mpsc::Sender<Vec<u8>>,
++    inbound_rx: tokio::sync::Mutex<tokio::sync::mpsc::Receiver<Vec<u8>>>,
++    ctrl_tx: tokio::sync::mpsc::Sender<crate::quic::Control>,
++    alive: Arc<AtomicBool>,
++    last_error: Arc<Mutex<Option<String>>>,
++    _guard: Mutex<crate::relay::TaskGuard>,
++}
++
++fn raw_tunnels() -> &'static Mutex<HashMap<u64, Arc<RawTunnel>>> {
++    static RAW_TUNNELS: OnceLock<Mutex<HashMap<u64, Arc<RawTunnel>>>> = OnceLock::new();
++    RAW_TUNNELS.get_or_init(|| Mutex::new(HashMap::new()))
++}
++
++#[derive(serde::Deserialize)]
++struct RawTunnelPayload {
++    peer: String,
++    #[serde(default)]
++    h2: Option<bool>,
++    #[serde(default)]
++    ech: Option<bool>,
++    #[serde(default)]
++    profile: Option<String>,
++    #[serde(default)]
++    mtu: Option<usize>,
++    #[serde(default)]
++    startup_secs: Option<u64>,
++}
++
++#[no_mangle]
++pub unsafe extern "C" fn aether_raw_tunnel_start(
++    identity: u64,
++    payload: *const c_char,
++) -> *mut c_char {
++    respond(|| {
++        let payload: RawTunnelPayload = unsafe { read_json(payload) }?;
++        let identity = identity_of(identity)?;
++        let peer = socket_of(&payload.peer, "the peer address")?;
++        let h2 = payload.h2.unwrap_or(false);
++        let want_ech = payload.ech.unwrap_or(false);
++        let noize = match payload.profile.as_deref() {
++            Some(name) if !name.trim().is_empty() => crate::noize::from_profile(name.trim()),
++            _ => crate::noize::NoizeConfig::off(),
++        };
++        let mtu = payload.mtu.unwrap_or(1280).clamp(1200, 1400);
++        let startup = Duration::from_secs(payload.startup_secs.unwrap_or(20).clamp(3, 90));
++
++        spawn_job(move |cancel| async move {
++            let ech = job_ech(want_ech, api::Transport::Masque).await?;
++            let sni = crate::quic::masque_sni().map_err(describe)?;
++            let local_ipv4 = crate::modes::parse_local_v4(&identity.ipv4);
++            let (chans, internals) = crate::quic::channels();
++            let crate::quic::Channels {
++                outbound_tx,
++                inbound_rx,
++                ctrl_tx,
++            } = chans;
++
++            let mut guard = crate::relay::TaskGuard::new();
++            let alive = Arc::new(AtomicBool::new(true));
++            let last_error: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
++            let assigned_v4 = Arc::new(Mutex::new(identity.ipv4.clone()));
++            let assigned_v6 = Arc::new(Mutex::new(identity.ipv6.clone()));
++
++            let (addr_tx, mut addr_rx) = tokio::sync::mpsc::channel::<crate::quic::AssignedAddr>(8);
++            let v4_slot = assigned_v4.clone();
++            let v6_slot = assigned_v6.clone();
++            let addr_task = tokio::spawn(async move {
++                while let Some(a) = addr_rx.recv().await {
++                    match a.ip {
++                        IpAddr::V4(v4) => {
++                            *v4_slot.lock() = format!("{v4}/{}", a.prefix);
++                        }
++                        IpAddr::V6(v6) => {
++                            *v6_slot.lock() = format!("{v6}/{}", a.prefix);
++                        }
++                    }
++                }
++            });
++            guard.push(addr_task.abort_handle());
++
++            let (ready_tx, ready_rx) = tokio::sync::oneshot::channel::<()>();
++            let dial = if h2 {
++                crate::masque_h2::h2_peer(peer)
++            } else {
++                peer
++            };
++
++            let alive_watch = alive.clone();
++            let err_watch = last_error.clone();
++            let tunnel_task = tokio::spawn(async move {
++                let res = if h2 {
++                    let h2cfg = crate::masque_h2::H2TunnelConfig {
++                        peer: dial,
++                        sni,
++                        authority: crate::quic::default_authority().to_string(),
++                        path: crate::quic::default_path().to_string(),
++                        cert_pem: identity.cert_pem.clone(),
++                        key_pem: identity.key_pem.clone(),
++                        local_ipv4,
++                        quiet: false,
++                        pin_endpoint: true,
++                        expected_pins: crate::consts::MASQUE_PINS,
++                        ech_config_list: ech,
++                    };
++                    crate::masque_h2::run(h2cfg, internals, Some(addr_tx), Some(ready_tx)).await
++                } else {
++                    let cfg = crate::quic::TunnelConfig {
++                        peer: dial,
++                        sni,
++                        authority: crate::quic::default_authority().to_string(),
++                        path: crate::quic::default_path().to_string(),
++                        cert_pem: identity.cert_pem.clone(),
++                        key_pem: identity.key_pem.clone(),
++                        ech_config_list: ech,
++                        noize,
++                        local_ipv4,
++                        quiet: false,
++                        max_datagram: crate::quic::MAX_DATAGRAM_SIZE,
++                        version_bait: true,
++                    };
++                    crate::quic::run(cfg, internals, Some(addr_tx), Some(ready_tx)).await
++                };
++                if let Err(ref e) = res {
++                    *err_watch.lock() = Some(e.to_string());
++                }
++                alive_watch.store(false, Ordering::SeqCst);
++            });
++            guard.push(tunnel_task.abort_handle());
++
++            let wait_ready = async {
++                tokio::select! {
++                    biased;
++                    _ = cancel.wait() => Err("cancelled".to_string()),
++                    res = tokio::time::timeout(startup, ready_rx) => match res {
++                        Ok(Ok(())) => Ok(()),
++                        Ok(Err(_)) => {
++                            let reason = last_error
++                                .lock()
++                                .clone()
++                                .unwrap_or_else(|| "MASQUE tunnel exited before validation".to_string());
++                            Err(reason)
++                        }
++                        Err(_) => Err(format!("MASQUE tunnel startup timed out after {}s", startup.as_secs())),
++                    }
++                }
++            };
++
++            if let Err(err) = wait_ready.await {
++                let _ = ctrl_tx.try_send(crate::quic::Control::Close);
++                drop(guard);
++                return Err(err);
++            }
++
++            let id = next_id();
++            let ipv4 = assigned_v4.lock().clone();
++            let ipv6 = assigned_v6.lock().clone();
++            raw_tunnels().lock().insert(
++                id,
++                Arc::new(RawTunnel {
++                    outbound_tx,
++                    inbound_rx: tokio::sync::Mutex::new(inbound_rx),
++                    ctrl_tx,
++                    alive,
++                    last_error,
++                    _guard: Mutex::new(guard),
++                }),
++            );
++
++            Ok(json!({
++                "tunnel": id,
++                "peer": dial.to_string(),
++                "ipv4": ipv4,
++                "ipv6": ipv6,
++                "mtu": mtu,
++                "carrier": if h2 { "h2" } else { "h3" }
++            }))
++        })
++    })
++}
++
++#[no_mangle]
++pub unsafe extern "C" fn aether_raw_tunnel_send(
++    tunnel: u64,
++    data: *const u8,
++    len: usize,
++) -> i32 {
++    if data.is_null() || len == 0 || len > 65535 {
++        return -1;
++    }
++    let handle = match raw_tunnels().lock().get(&tunnel).cloned() {
++        Some(h) => h,
++        None => return -1,
++    };
++    if !handle.alive.load(Ordering::SeqCst) {
++        return -1;
++    }
++    let pkt = unsafe { std::slice::from_raw_parts(data, len) }.to_vec();
++    match handle.outbound_tx.try_send(pkt) {
++        Ok(()) => 0,
++        Err(tokio::sync::mpsc::error::TrySendError::Full(_)) => -2,
++        Err(tokio::sync::mpsc::error::TrySendError::Closed(_)) => -1,
++    }
++}
++
++#[no_mangle]
++pub unsafe extern "C" fn aether_raw_tunnel_recv(
++    tunnel: u64,
++    buf: *mut u8,
++    cap: usize,
++    timeout_ms: u32,
++) -> i32 {
++    if buf.is_null() || cap == 0 {
++        return -1;
++    }
++    let handle = match raw_tunnels().lock().get(&tunnel).cloned() {
++        Some(h) => h,
++        None => return -1,
++    };
++    let rt = match runtime() {
++        Some(r) => r,
++        None => return -1,
++    };
++    let wait = Duration::from_millis(timeout_ms.max(1) as u64);
++    let outcome = rt.block_on(async {
++        let mut rx = handle.inbound_rx.lock().await;
++        tokio::time::timeout(wait, rx.recv()).await
++    });
++    match outcome {
++        Ok(Some(pkt)) => {
++            let n = pkt.len().min(cap);
++            unsafe {
++                std::ptr::copy_nonoverlapping(pkt.as_ptr(), buf, n);
++            }
++            n as i32
++        }
++        Ok(None) => -1,
++        Err(_) => {
++            if handle.alive.load(Ordering::SeqCst) {
++                0
++            } else {
++                -1
++            }
++        }
++    }
++}
++
++#[no_mangle]
++pub extern "C" fn aether_raw_tunnel_is_alive(tunnel: u64) -> i32 {
++    match raw_tunnels().lock().get(&tunnel) {
++        Some(h) if h.alive.load(Ordering::SeqCst) => 1,
++        _ => 0,
++    }
++}
++
++#[no_mangle]
++pub extern "C" fn aether_raw_tunnel_migrate(tunnel: u64) -> i32 {
++    let handle = match raw_tunnels().lock().get(&tunnel).cloned() {
++        Some(h) => h,
++        None => return 0,
++    };
++    if !handle.alive.load(Ordering::SeqCst) {
++        return 0;
++    }
++    match handle.ctrl_tx.try_send(crate::quic::Control::Migrate) {
++        Ok(()) => 1,
++        Err(_) => 0,
++    }
++}
++
++#[no_mangle]
++pub extern "C" fn aether_raw_tunnel_stop(tunnel: u64) -> *mut c_char {
++    respond(|| {
++        let removed = raw_tunnels().lock().remove(&tunnel);
++        match removed {
++            Some(handle) => {
++                handle.alive.store(false, Ordering::SeqCst);
++                let _ = handle.ctrl_tx.try_send(crate::quic::Control::Close);
++                let last_err = handle.last_error.lock().clone();
++                drop(handle);
++                Ok(json!({"stopped": tunnel, "last_error": last_err}))
++            }
++            None => Ok(json!({"stopped": Value::Null})),
++        }
++    })
++}
++
+ #[cfg(test)]
+ mod tests {
+     use super::*;

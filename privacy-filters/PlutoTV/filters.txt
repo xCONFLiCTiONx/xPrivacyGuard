@@ -1,0 +1,51 @@
+! Title: xPrivacy Guard - Pluto TV Network Ad & Tracker Blocker (Fixed v2)
+! Description: Chrome-compliant network filters for Pluto TV FreeWheel ad injection and tracking, with essential player/SPA dependencies unblocked.
+! Note: Do not block stitched .m4s/.mp4 chunks on siloh*.plutotv.net as Pluto TV uses SSAI (Server-Side Ad Insertion);
+! hard-blocking manifest media segments crashes the MSE buffer with Error Code 3005.
+! Note: All rules use $important because another ruleset was re-allowing these requests.
+! Parent-domain rules already cover subdomains (||fwmrm.net^ covers 7f077.v.fwmrm.net).
+
+! ============================================================
+! FREEWHEEL AD SERVER & AD INJECTION
+! ============================================================
+||fwmrm.net^$important
+||7f077.v.fwmrm.net^$important
+
+! ============================================================
+! PLUTO TV AD BEACONS, TELEMETRY & TRACKING (Safe to block)
+! ============================================================
+||ads.pluto.tv^$important
+||advertising.pluto.tv^$important
+||tracking.pluto.tv^$important
+||analytics.pluto.tv^$important
+||o.pluto.tv^$important
+||sparrow.pluto.tv^$important
+! k.pluto.tv ad events
+||k.pluto.tv/?category=ad$important
+||k.pluto.tv^$important
+
+! ============================================================
+! THIRD-PARTY AD BEACONS & MEASUREMENT (OMSDK, DV, IAS, Innovid, VideoAmp)
+! ============================================================
+||extremereach.io^$important
+||doubleclick.net^$important
+||ade.googlesyndication.com^$important
+||doubleverify.com^$important
+||dv.tech^$important
+||adsafeprotected.com^$important
+||innovid.com^$important
+||agkn.com^$important
+||imtwjwoasak.com^$important
+||ispot.tv^$important
+||hrzn-nxt.com^$important
+||videoamp.com^$important
+||b.videoamp.com^$important
+
+! ============================================================
+! TELEMETRY, LOGGING & QUALITY OF SERVICE (Conviva, Datadog & Ketch)
+! ============================================================
+||browser-intake-datadoghq.com^$important
+||conviva.com^$important
+||cws.conviva.com^$important
+||ketchcdn.com^$important
+||global.ketchcdn.com^$important

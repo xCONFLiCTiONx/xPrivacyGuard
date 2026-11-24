@@ -1,3 +1,18 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" fill="currentColor"/>
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1D1D22"/>
+      <stop offset="100%" stop-color="#141417"/>
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FAAD3F"/>
+      <stop offset="50%" stop-color="#F38020"/>
+      <stop offset="100%" stop-color="#D96512"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="100" height="100" rx="22" fill="url(#bgGrad)" stroke="#2E2E36" stroke-width="2.4"/>
+  <polygon points="54,17.3 87.2,29.4 84.4,61.1 70.6,80.8 54,92.9 37.4,80.8 23.6,61.1 20.8,29.4" fill="url(#shieldGrad)"/>
+  <polygon points="54,26.1 78.6,35.1 76.5,58.5 66.3,73.1 54,82.1 41.7,73.1 31.5,58.5 29.4,35.1" fill="#121215"/>
+  <polygon points="49.1,54.1 58.9,54.1 61.4,72.9 46.6,72.9" fill="#F38020"/>
+  <circle cx="54" cy="50.8" r="9.5" fill="#FAAD3F"/>
 </svg>

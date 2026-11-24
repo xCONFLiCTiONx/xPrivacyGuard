@@ -1,3 +1,7 @@
+# ==============================================================================
+# xPrivacyGuard — Unified Root .gitignore
+# ==============================================================================
+
 # Secrets, keys, and local environment
 .env
 .env.*
@@ -13,6 +17,8 @@ secrets/
 credentials/
 *credentials*.json
 *secret*.json
+*.local.json
+*.secrets.json
 extension_key.json
 .extension-key.xml
 cloudflare.ini
@@ -50,11 +56,13 @@ desktop.ini
 *.backup-*
 *.tmp
 
-# Android / Gradle / Kotlin
+# Android / Gradle / Kotlin / CMake
 .gradle/
 .kotlin/
 **/build/
-app/release/
+**/app/release/
+android-vpn/app/src/main/jniLibs/
+android-vpn/third_party/Aether/
 captures/
 .externalNativeBuild/
 .cxx/
@@ -63,6 +71,19 @@ local.properties
 *.aab
 output-metadata.json
 **/mapping.txt
+
+# Windows / .NET / WPF / Inno Setup
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+.publish/
+windows-vpn/scripts/windows/_deps/
+*-Setup.exe
+
+# Rust / Cargo
+target/
 
 # Chrome Extension & Node packaging
 node_modules/
@@ -77,3 +98,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# VPN configs
+*.conf

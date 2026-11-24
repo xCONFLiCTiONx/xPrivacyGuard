@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.XPrivacyGuard" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">#121214</item>
+        <item name="android:navigationBarColor">#121214</item>
+    </style>
+</resources>
+

@@ -1,0 +1,60 @@
+! Title: xPrivacy Guard - Pornhub Ad & Tracker Protection
+! Description: Network and cosmetic filters for Pornhub ads, tracking, and telemetry without breaking CDN assets or playback.
+! Note: Do not block phncdn.com or phprcdn.com; Pornhub serves essential site scripts, CSS, player logic, and video streams from these CDNs.
+
+! ============================================================
+! TRAFFICJUNKY AD SERVERS & AD NETWORKS
+! ============================================================
+||trafficjunky.com^$important
+||trafficjunky.net^$important
+||tjcdn.com^$important
+||pt.trafficjunky.com^$important
+||delivery.trafficjunky.com^$important
+||ads.trafficjunky.net^$important
+||tsyndicate.com^$important
+||exoclick.com^$important
+||juicyads.com^$important
+
+! ============================================================
+! PORNHUB TELEMETRY & EVENT TRACKING
+! ============================================================
+||ht.pornhub.com^$important
+||et.pornhub.com^$important
+||wt.pornhub.com^$important
+||ts.pornhub.com^$important
+
+! ============================================================
+! THIRD-PARTY AD NETWORKS & TRACKERS
+! ============================================================
+||doubleclick.net^$important
+||googlesyndication.com^$important
+||google-analytics.com^$important
+||googletagmanager.com^$important
+||adnxs.com^$important
+||openx.net^$important
+||rubiconproject.com^$important
+||pubmatic.com^$important
+||criteo.com^$important
+||scorecardresearch.com^$important
+||hotjar.com^$important
+||segment.io^$important
+||newrelic.com^$important
+||onesignal.com^$important
+
+! ============================================================
+! COSMETIC AD & PROMO BLOCKING (Preserves Core Layout & UI)
+! ============================================================
+pornhub.com##div[class*="adSection"]
+pornhub.com##div[class*="ad-container"]
+pornhub.com##div[class*="ad-box"]
+pornhub.com##div[id^="ad-"]
+pornhub.com##div[id^="ad_"]
+pornhub.com##.networkBar
+pornhub.com##.wide-ad-box
+pornhub.com##.under-player-ad
+pornhub.com##.premium-promo
+pornhub.com##.ad-link
+pornhub.com##.commercial-section
+pornhub.com##iframe[src*="trafficjunky.com"]
+pornhub.com##iframe[src*="trafficjunky.net"]
+pornhub.com##[data-ad-slot]

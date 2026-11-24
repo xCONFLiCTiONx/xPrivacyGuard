@@ -1,0 +1,4 @@
+-keep class org.bouncycastle.** { *; }
+-dontwarn org.bouncycastle.**
+-keep class com.xconflictionx.xprivacyguard.** { *; }
+-dontwarn java.lang.invoke.StringConcatFactory

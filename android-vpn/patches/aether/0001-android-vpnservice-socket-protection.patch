@@ -1,0 +1,103 @@
+diff --git a/aether/src/egress.rs b/aether/src/egress.rs
+index 30c6765..33d483e 100644
+--- a/aether/src/egress.rs
++++ b/aether/src/egress.rs
+@@ -2,8 +2,10 @@ use std::collections::VecDeque;
+ use std::future::Future;
+ use std::io;
+ use std::net::SocketAddr;
+-use std::sync::atomic::{AtomicU32, Ordering};
++use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
+ use std::time::Duration;
++#[cfg(target_os = "android")]
++use std::os::fd::AsRawFd;
+ 
+ use futures::stream::{FuturesUnordered, StreamExt};
+ use socket2::{Domain, Protocol, SockRef, Socket, Type};
+@@ -20,6 +22,16 @@ pub enum EgressError {
+ }
+ 
+ static MARK: AtomicU32 = AtomicU32::new(0);
++static ANDROID_SOCKET_PROTECTOR: AtomicUsize = AtomicUsize::new(0);
++
++pub type AndroidSocketProtector = extern "C" fn(i32) -> i32;
++
++pub fn set_android_socket_protector(callback: Option<AndroidSocketProtector>) {
++    ANDROID_SOCKET_PROTECTOR.store(
++        callback.map_or(0, |function| function as usize),
++        Ordering::SeqCst,
++    );
++}
+ 
+ pub(crate) const MAX_TRANSIENT_RECV_ERRORS: u32 = 64;
+ pub(crate) const TRANSIENT_RECV_BACKOFF: Duration = Duration::from_millis(50);
+@@ -85,6 +97,23 @@ pub fn mark() -> u32 {
+ }
+ 
+ pub fn apply(socket: SockRef<'_>) -> io::Result<()> {
++    #[cfg(target_os = "android")]
++    {
++        let callback = ANDROID_SOCKET_PROTECTOR.load(Ordering::SeqCst);
++        if callback == 0 {
++            return Err(io::Error::new(
++                io::ErrorKind::PermissionDenied,
++                "Android VpnService socket protection callback is not registered",
++            ));
++        }
++        let protect: AndroidSocketProtector = unsafe { std::mem::transmute(callback) };
++        if protect(socket.as_raw_fd()) != 1 {
++            return Err(io::Error::new(
++                io::ErrorKind::PermissionDenied,
++                "Android VpnService.protect(fd) rejected the Aether socket",
++            ));
++        }
++    }
+     #[cfg(any(target_os = "linux", target_os = "android"))]
+     {
+         let mark = MARK.load(Ordering::Relaxed);
+diff --git a/aether/src/ffi.rs b/aether/src/ffi.rs
+index d88e6d2..dac5666 100644
+--- a/aether/src/ffi.rs
++++ b/aether/src/ffi.rs
+@@ -13,6 +13,7 @@ use serde_json::{json, Value};
+ 
+ use crate::account::Identity;
+ use crate::api;
++use crate::egress::{self, AndroidSocketProtector};
+ use crate::zerotrust;
+ 
+ type Reply = std::result::Result<Value, String>;
+@@ -144,6 +145,11 @@ where
+     Ok(json!({"job": id}))
+ }
+ 
++#[no_mangle]
++pub extern "C" fn aether_set_android_socket_protector(callback: Option<AndroidSocketProtector>) {
++    egress::set_android_socket_protector(callback);
++}
++
+ fn identity_of(id: u64) -> std::result::Result<Arc<Identity>, String> {
+     identities()
+         .lock()
+diff --git a/aether/src/prober.rs b/aether/src/prober.rs
+index 22d68de..a0298b5 100644
+--- a/aether/src/prober.rs
++++ b/aether/src/prober.rs
+@@ -1186,7 +1186,7 @@ mod tests {
+         } else {
+             "[::]:0"
+         };
+-        let sock = tokio::net::UdpSocket::bind(bind).await.ok()?;
++        let sock = crate::egress::udp_bind(bind.parse().ok()?).ok()?;
+         sock.connect(peer).await.ok()?;
+         let local = sock.local_addr().ok()?;
+ 
+@@ -1221,7 +1221,7 @@ mod tests {
+ 
+     async fn tcp_answers(peer: SocketAddr, timeout: Duration) -> Option<Duration> {
+         let started = Instant::now();
+-        match tokio::time::timeout(timeout, tokio::net::TcpStream::connect(peer)).await {
++        match tokio::time::timeout(timeout, crate::egress::tcp_connect(peer)).await {
+             Ok(Ok(_)) => Some(started.elapsed()),
+             _ => None,
+         }
