@@ -271,59 +271,6 @@ function initGpc() {
   });
 }
 
-// Adaptive Icon Rendering
-function createIconImageData(size, iconColor) {
-  const canvas = new OffscreenCanvas(size, size);
-  const ctx = canvas.getContext("2d");
-
-  ctx.clearRect(0, 0, size, size);
-  ctx.fillStyle = iconColor;
-
-  ctx.save();
-  const scale = size / 24;
-  ctx.scale(scale, scale);
-  const p = new Path2D(
-    "M18.1226 4.61173L20.2296 9.24575C20.6431 9.32949 21.0453 9.42049 21.4341 9.51884C21.8357 9.62041 22.0789 10.0283 21.9773 10.4299C21.8757 10.8314 21.4678 11.0746 21.0663 10.973C20.5907 10.8528 20.0898 10.7432 19.5676 10.6447C15.0144 9.78522 8.98831 9.78512 4.43466 10.6443C3.91182 10.743 3.41022 10.8526 2.93409 10.973C2.53252 11.0746 2.12465 10.8314 2.02308 10.4298C1.92151 10.0283 2.1647 9.62041 2.56627 9.51884C2.95569 9.42034 3.35853 9.32922 3.77264 9.24537L5.8787 4.61204C6.32494 3.63031 7.30381 3 8.38221 3H15.6192C16.6975 3 17.6762 3.63017 18.1226 4.61173ZM3.5 16.5C3.5 14.8431 4.84315 13.5 6.5 13.5C8.15685 13.5 9.5 14.8431 9.5 16.5C9.5 18.1569 8.15685 19.5 6.5 19.5C4.84315 19.5 3.5 18.1569 3.5 16.5ZM6.5 12C4.01472 12 2 14.0147 2 16.5C2 18.9853 4.01472 21 6.5 21C8.64159 21 10.4338 19.504 10.8885 17.5H13.1115C13.5662 19.504 15.3584 21 17.5 21C19.9853 21 22 18.9853 22 16.5C22 14.0147 19.9853 12 17.5 12C15.1837 12 13.2762 13.75 13.0275 16H10.9725C10.7238 13.75 8.81628 12 6.5 12ZM14.5 16.5C14.5 14.8431 15.8431 13.5 17.5 13.5C19.1569 13.5 20.5 14.8431 20.5 16.5C20.5 18.1569 19.1569 19.5 17.5 19.5C15.8431 19.5 14.5 18.1569 14.5 16.5Z"
-  );
-  ctx.fill(p);
-  ctx.restore();
-
-  return ctx.getImageData(0, 0, size, size);
-}
-
-async function updateExtensionIcon(isDarkMode) {
-  const iconColor = isDarkMode ? "#FFFFFF" : "#000000";
-
-  try {
-    await chrome.action.setIcon({
-      imageData: {
-        16: createIconImageData(16, iconColor),
-        32: createIconImageData(32, iconColor),
-        48: createIconImageData(48, iconColor),
-        128: createIconImageData(128, iconColor)
-      }
-    });
-  } catch (err) {
-    console.error("xPrivacyGuard Desktop: Failed to set extension icon:", err);
-  }
-}
-
-try {
-  chrome.storage.local.get(["last_known_is_dark"], (res) => {
-    if (res && typeof res.last_known_is_dark === "boolean") {
-      updateExtensionIcon(res.last_known_is_dark);
-    }
-  });
-} catch (_) {}
-
-chrome.runtime.onStartup.addListener(() => {
-  chrome.storage.local.get(["last_known_is_dark"], (res) => {
-    if (res && typeof res.last_known_is_dark === "boolean") {
-      updateExtensionIcon(res.last_known_is_dark);
-    }
-  });
-});
-
 // --- Tab Session Block Counter & Icon Badge ---
 const tabBlockCounts = new Map();
 const seenBlockRequests = new Map();
@@ -509,17 +456,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       () => sendResponse({ success: true }),
       (err) => sendResponse({ success: false, error: err.message })
     );
-    return true;
-  }
-
-  if (message && message.action === "updateIcon") {
-    if (typeof message.isDarkMode === "boolean") {
-      try {
-        chrome.storage.local.set({ last_known_is_dark: message.isDarkMode });
-      } catch (_) {}
-      updateExtensionIcon(message.isDarkMode);
-    }
-    sendResponse({ success: true });
     return true;
   }
 

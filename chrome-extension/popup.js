@@ -29,11 +29,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const UNMUTED_ICON_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>';
   const MUTED_ICON_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>';
 
-  try {
-    const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    chrome.runtime.sendMessage({ action: "updateIcon", isDarkMode });
-  } catch (e) {}
-
   function cleanDomain(input) {
     if (!input) return "";
     let str = input.trim().toLowerCase();
