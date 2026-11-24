@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -569,6 +570,24 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             CfAuthStatusText.Text = $"Resend failed: {ex.Message}";
+        }
+    }
+
+    private void OpenCfServiceTokens_Click(object sender, RoutedEventArgs e)
+        => OpenUrl("https://one.dash.cloudflare.com/?to=/:account/access/service-auth/service-tokens");
+
+    private void OpenCfDnsLocations_Click(object sender, RoutedEventArgs e)
+        => OpenUrl("https://one.dash.cloudflare.com/?to=/:account/gateway/locations");
+
+    private void OpenUrl(string url)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Could not open browser: {ex.Message}";
         }
     }
 

@@ -210,7 +210,14 @@
 
           <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
             <StackPanel>
-              <TextBlock Text="Advanced Transport &amp; Service Token (Optional)" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
+              <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Advanced Transport &amp; Service Token (Optional)" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <Button Grid.Column="1" Content="Open Cloudflare Service Tokens ↗" Click="OpenCfServiceTokens_Click" Padding="10,5" FontSize="11" Background="{StaticResource AccentContainer}" BorderBrush="{StaticResource Accent}" Foreground="{StaticResource Accent}" ToolTip="Open Cloudflare Zero Trust → Access → Service Auth → Service Tokens"/>
+              </Grid>
               <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*"/>
@@ -253,7 +260,14 @@
         <StackPanel>
           <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
             <StackPanel>
-              <TextBlock Text="Cloudflare Zero Trust DNS Location" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
+              <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Cloudflare Zero Trust DNS Location" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <Button Grid.Column="1" Content="Open Gateway DNS Locations ↗" Click="OpenCfDnsLocations_Click" Padding="10,5" FontSize="11" Background="{StaticResource AccentContainer}" BorderBrush="{StaticResource Accent}" Foreground="{StaticResource Accent}" ToolTip="Open Cloudflare Zero Trust → Gateway → DNS Locations"/>
+              </Grid>
               <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*"/>
