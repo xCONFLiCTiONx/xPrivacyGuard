@@ -1,0 +1,263 @@
+name: Publish xPrivacyGuard (android-vpn) to F-Droid Repo
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      repo_url:
+        description: 'Optional override for public F-Droid repo URL (defaults to GitHub Pages)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-vpn-fdroid
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish-fdroid:
+    runs-on: ubuntu-latest
+    env:
+      NDK_VERSION: '27.2.12479018'
+      BUILD_TOOLS_VERSION: '35.0.0'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK & NDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: |
+            platforms;android-36
+            build-tools;35.0.0
+            cmake;3.22.1
+            ndk;27.2.12479018
+
+      - name: Set up Rust toolchain and Android targets
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,x86_64-linux-android
+
+      - name: Cache Cargo and cargo-ndk
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/cargo-ndk
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-ndk-${{ hashFiles('android-vpn/patches/aether/*.patch') }}
+
+      - name: Install cargo-ndk
+        run: |
+          if ! command -v cargo-ndk >/dev/null 2>&1; then
+            cargo install cargo-ndk --locked
+          fi
+
+      - name: Build Aether native libraries for Android
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}
+        run: |
+          chmod +x android-vpn/scripts/build-aether-android.sh
+          bash android-vpn/scripts/build-aether-android.sh
+
+      - name: Decode Android app signing keystore
+        id: app_keystore
+        run: |
+          if [[ -z "${{ secrets.XPRIVACYGUARD_KEYSTORE_BASE64 }}" ]]; then
+            echo "ERROR: Missing secret XPRIVACYGUARD_KEYSTORE_BASE64. Run android-vpn/scripts/init-fdroid-keys.ps1 first." >&2
+            exit 1
+          fi
+          KEYSTORE_FILE="${RUNNER_TEMP}/xprivacyguard-release.jks"
+          printf '%s' "${{ secrets.XPRIVACYGUARD_KEYSTORE_BASE64 }}" | base64 --decode > "${KEYSTORE_FILE}"
+          echo "path=${KEYSTORE_FILE}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build signed Release APK (android-vpn)
+        working-directory: android-vpn
+        env:
+          XPRIVACYGUARD_KEYSTORE_PATH: ${{ steps.app_keystore.outputs.path }}
+          XPRIVACYGUARD_KEYSTORE_PASSWORD: ${{ secrets.XPRIVACYGUARD_KEYSTORE_PASSWORD }}
+          XPRIVACYGUARD_KEY_ALIAS: ${{ secrets.XPRIVACYGUARD_KEY_ALIAS }}
+          XPRIVACYGUARD_KEY_PASSWORD: ${{ secrets.XPRIVACYGUARD_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleRelease --no-build-cache --no-watch-fs
+
+      - name: Read app version metadata
+        id: app_meta
+        run: |
+          VERSION_NAME=$(grep -oP 'versionName\s*=\s*"\K[^"]+' android-vpn/app/build.gradle.kts | head -n1)
+          VERSION_CODE=$(grep -oP 'versionCode\s*=\s*\K\d+' android-vpn/app/build.gradle.kts | head -n1)
+          echo "version_name=${VERSION_NAME}" >> "${GITHUB_OUTPUT}"
+          echo "version_code=${VERSION_CODE}" >> "${GITHUB_OUTPUT}"
+          echo "Built xPrivacyGuard v${VERSION_NAME} (code ${VERSION_CODE})"
+
+      - name: Set up Python and fdroidserver
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install fdroidserver
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y rsync
+          pip install --upgrade pip fdroidserver
+
+      - name: Fetch existing gh-pages F-Droid repository (if present)
+        run: |
+          mkdir -p fdroid-site
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git fetch origin gh-pages:gh-pages
+            git archive gh-pages | tar -x -C fdroid-site
+          fi
+
+      - name: Prepare F-Droid repository and run fdroid update
+        id: fdroid_update
+        env:
+          REPO_KEYSTORE_B64: ${{ secrets.FDROID_REPO_KEYSTORE_BASE64 }}
+          REPO_KEYSTORE_PASS: ${{ secrets.FDROID_REPO_KEYSTORE_PASSWORD }}
+          REPO_KEY_ALIAS: ${{ secrets.FDROID_REPO_KEY_ALIAS }}
+          REPO_KEY_PASS: ${{ secrets.FDROID_REPO_KEY_PASSWORD }}
+          CUSTOM_REPO_URL: ${{ inputs.repo_url || vars.FDROID_REPO_URL }}
+        run: |
+          if [[ -z "${REPO_KEYSTORE_B64}" ]]; then
+            echo "ERROR: Missing secret FDROID_REPO_KEYSTORE_BASE64. Run android-vpn/scripts/init-fdroid-keys.ps1 first." >&2
+            exit 1
+          fi
+
+          OWNER_LOWER="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
+          if [[ -n "${CUSTOM_REPO_URL}" ]]; then
+            REPO_URL="${CUSTOM_REPO_URL%/}"
+          else
+            REPO_URL="https://${OWNER_LOWER}.github.io/${REPO_NAME}/fdroid/repo"
+          fi
+          echo "repo_url=${REPO_URL}" >> "${GITHUB_OUTPUT}"
+
+          WORK_DIR="${RUNNER_TEMP}/fdroid-work"
+          mkdir -p "${WORK_DIR}/repo" "${WORK_DIR}/metadata/com.xconflictionx.xprivacyguard"
+
+          # Preserve previously published APKs and icons
+          if [[ -d "fdroid-site/fdroid/repo" ]]; then
+            cp -a fdroid-site/fdroid/repo/*.apk "${WORK_DIR}/repo/" 2>/dev/null || true
+          fi
+
+          # Add newly built Release APK
+          APK_NAME="com.xconflictionx.xprivacyguard_${{ steps.app_meta.outputs.version_code }}.apk"
+          cp "android-vpn/app/build/outputs/apk/release/app-release.apk" "${WORK_DIR}/repo/${APK_NAME}"
+
+          # Copy Fastlane store metadata & icon
+          cp -a android-vpn/fastlane/metadata/android/* "${WORK_DIR}/metadata/com.xconflictionx.xprivacyguard/"
+          cp "assets/icon-512.png" "${WORK_DIR}/repo/icon.png"
+
+          # Decode persistent F-Droid repository signing keystore
+          REPO_KEYSTORE="${RUNNER_TEMP}/fdroid-repo-keystore.jks"
+          printf '%s' "${REPO_KEYSTORE_B64}" | base64 --decode > "${REPO_KEYSTORE}"
+
+          # Compute SHA-256 fingerprint for landing page & user verification
+          FINGERPRINT=$(keytool -list -v -keystore "${REPO_KEYSTORE}" -alias "${REPO_KEY_ALIAS}" -storepass "${REPO_KEYSTORE_PASS}" \
+            | grep -oP 'SHA256:\s*\K[0-9A-Fa-f:]+' | head -n1 | tr -d ':' | tr '[:lower:]' '[:upper:]')
+          echo "fingerprint=${FINGERPRINT}" >> "${GITHUB_OUTPUT}"
+
+          cat > "${WORK_DIR}/config.yml" <<EOF
+          repo_url: "${REPO_URL}"
+          repo_name: "xCONFLiCTiONx F-Droid Repo"
+          repo_icon: "icon.png"
+          repo_description: >-
+            Official xCONFLiCTiONx F-Droid repository for xPrivacyGuard (Android VPN).
+            Provides direct, signed release builds and automatic updates via F-Droid.
+          archive_older: 3
+          keystore: "${REPO_KEYSTORE}"
+          keystorepass: "${REPO_KEYSTORE_PASS}"
+          repo_keyalias: "${REPO_KEY_ALIAS}"
+          keypass: "${REPO_KEY_PASS}"
+          sdk_path: "${ANDROID_HOME}"
+          apksigner: "${ANDROID_HOME}/build-tools/${BUILD_TOOLS_VERSION}/apksigner"
+          EOF
+          chmod 600 "${WORK_DIR}/config.yml"
+
+          # Generate/update F-Droid index-v1 & index-v2 metadata
+          pushd "${WORK_DIR}" >/dev/null
+          fdroid update --create-metadata --pretty
+          popd >/dev/null
+
+          # Stage publishable static site
+          mkdir -p fdroid-site/fdroid
+          rm -rf fdroid-site/fdroid/repo fdroid-site/fdroid/archive
+          cp -a "${WORK_DIR}/repo" fdroid-site/fdroid/repo
+          if [[ -d "${WORK_DIR}/archive" ]]; then
+            cp -a "${WORK_DIR}/archive" fdroid-site/fdroid/archive
+          fi
+
+          # Create dark-themed landing page with repo URL, fingerprint, and one-tap link
+          REPO_URL_NO_SCHEME="${REPO_URL#https://}"
+          cat > fdroid-site/index.html <<HTML
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <title>xPrivacyGuard — F-Droid Repository</title>
+            <style>
+              :root { color-scheme: dark; }
+              body {
+                margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+                background: #121214; color: #f4f4f5; display: flex; min-height: 100vh;
+                align-items: center; justify-content: center; padding: 24px;
+              }
+              .card {
+                max-width: 680px; width: 100%; background: #1a1a1e; border: 1px solid #2c2c33;
+                border-radius: 14px; padding: 28px; box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+              }
+              h1 { margin: 0 0 8px; font-size: 1.5rem; color: #f38020; }
+              p { color: #a1a1aa; line-height: 1.5; }
+              code, pre {
+                background: #222227; border: 1px solid #2c2c33; border-radius: 8px;
+                padding: 10px 12px; display: block; overflow-x: auto; color: #f4f4f5;
+                font-size: 0.9rem; word-break: break-all;
+              }
+              a.btn {
+                display: inline-block; margin-top: 16px; background: #f38020; color: #121214;
+                font-weight: 600; text-decoration: none; padding: 10px 18px; border-radius: 8px;
+              }
+              a.btn:hover { background: #faad3f; }
+              .meta { margin-top: 18px; font-size: 0.85rem; color: #71717a; }
+            </style>
+          </head>
+          <body>
+            <main class="card">
+              <h1>xPrivacyGuard — F-Droid Repository</h1>
+              <p>Add this repository in the F-Droid client (Settings → Repositories → +) to install and receive automatic updates for <strong>xPrivacyGuard (Android VPN)</strong>.</p>
+              <p><strong>Repository URL</strong></p>
+              <code>${REPO_URL}</code>
+              <p><strong>SHA-256 Fingerprint</strong></p>
+              <code>${FINGERPRINT}</code>
+              <a class="btn" href="fdroidrepos://${REPO_URL_NO_SCHEME}?fingerprint=${FINGERPRINT}">Add to F-Droid</a>
+              <p class="meta">Latest version: v${{ steps.app_meta.outputs.version_name }} (versionCode ${{ steps.app_meta.outputs.version_code }})</p>
+            </main>
+          </body>
+          </html>
+          HTML
+
+          # Prevent Jekyll from ignoring files starting with underscores
+          touch fdroid-site/.nojekyll
+
+      - name: Deploy F-Droid repository to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./fdroid-site
+          publish_branch: gh-pages
+          commit_message: "chore(fdroid): publish xPrivacyGuard v${{ steps.app_meta.outputs.version_name }} (${{ steps.app_meta.outputs.version_code }})"

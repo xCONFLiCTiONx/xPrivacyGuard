@@ -1,0 +1,9 @@
+xPrivacyGuard is an open-source Android VPN and privacy client combining authenticated Cloudflare One (Zero Trust) MASQUE CONNECT-IP tunneling, WireGuard support, and on-device DNS/traffic filtering inside a single Android VpnService.
+
+Key features:
+* Cloudflare One / Zero Trust device enrollment and native MASQUE CONNECT-IP tunneling over HTTP/3 (QUIC) or HTTP/2, powered by the open-source Aether Rust core.
+* Independent WireGuard transport option for importing and using standard WireGuard profiles.
+* On-device privacy filtering with Adblock Plus, uBlock, AdGuard, and hosts-file filter list support (remote and local).
+* DNS interception, TLS SNI inspection, and HTTP Host/path inspection with real-time allow/block telemetry.
+* Per-app split tunneling / firewall routing and Cloudflare Zero Trust DNS Location support (DoH, DoT, IPv4, IPv6).
+* No root required, no trackers, no bundled credentials, and no Google Play Services dependencies.

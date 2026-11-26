@@ -1,0 +1,5 @@
+- Initial public F-Droid release (v2.0.0)
+- Native Cloudflare One Zero Trust enrollment and MASQUE CONNECT-IP tunneling (HTTP/3 & HTTP/2)
+- WireGuard transport support with per-app split tunneling
+- On-device DNS, TLS SNI, and HTTP filter engine with remote and local filter lists
+- Unified dark theme and F-Droid-compatible FOSS release packaging

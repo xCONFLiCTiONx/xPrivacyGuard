@@ -11,6 +11,9 @@ val releaseKeyAlias = providers.environmentVariable("XPRIVACYGUARD_KEY_ALIAS").o
     ?: providers.environmentVariable("XPRIVACYVPN_KEY_ALIAS").orNull
 val releaseKeyPassword = providers.environmentVariable("XPRIVACYGUARD_KEY_PASSWORD").orNull
     ?: providers.environmentVariable("XPRIVACYVPN_KEY_PASSWORD").orNull
+val buildUnsignedRelease = providers.environmentVariable("XPRIVACYGUARD_UNSIGNED")
+    .orNull
+    ?.equals("true", ignoreCase = true) == true
 val hasReleaseSigning = listOf(
     releaseKeystorePath,
     releaseKeystorePassword,
@@ -59,7 +62,7 @@ android {
         release {
             if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
-            } else {
+            } else if (!buildUnsignedRelease) {
                 signingConfig = signingConfigs.getByName("debug")
             }
             isMinifyEnabled = true
@@ -83,6 +86,20 @@ android {
 
     buildFeatures {
         compose = true
+    }
+
+    dependenciesInfo {
+        // Required for F-Droid reproducible/FOSS builds: disables Google's
+        // encrypted dependency metadata block inside the APK signing block.
+        includeInApk = false
+        includeInBundle = false
+    }
+
+    dependenciesInfo {
+        // Required for F-Droid reproducible/FOSS builds: disables Google's
+        // encrypted dependency metadata block inside the APK signing block.
+        includeInApk = false
+        includeInBundle = false
     }
 
     externalNativeBuild {

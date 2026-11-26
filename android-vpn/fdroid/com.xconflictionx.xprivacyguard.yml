@@ -1,0 +1,48 @@
+# Official F-Droid fdroiddata metadata recipe for xPrivacyGuard (android-vpn)
+# Copy this file to: <fdroiddata>/metadata/com.xconflictionx.xprivacyguard.yml
+#
+# Note on licensing:
+# xPrivacyGuard is licensed under GPL-3.0-only, and its pinned Aether Rust core
+# submodule (https://github.com/CluvexStudio/Aether) is AGPL-3.0-only.
+
+Categories:
+  - Internet
+  - Security
+
+License: AGPL-3.0-only
+
+AuthorName: xCONFLiCTiONx
+SourceCode: https://github.com/xCONFLiCTiONx/xPrivacyGuard
+IssueTracker: https://github.com/xCONFLiCTiONx/xPrivacyGuard/issues
+Changelog: https://github.com/xCONFLiCTiONx/xPrivacyGuard/releases
+
+AutoName: xPrivacyGuard
+
+RepoType: git
+Repo: https://github.com/xCONFLiCTiONx/xPrivacyGuard.git
+
+Builds:
+  - versionName: 2.0.0
+    versionCode: 8
+    commit: 2.0.0
+    subdir: android-vpn/app
+    gradle:
+      - yes
+    ndk: 27.2.12479018
+    prebuild:
+      - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
+      - export PATH="$HOME/.cargo/bin:$PATH"
+      - rustup target add aarch64-linux-android x86_64-linux-android
+      - cargo install cargo-ndk --locked
+      - bash ../scripts/build-aether-android.sh --fetch-only
+    build:
+      - export PATH="$HOME/.cargo/bin:$PATH"
+      - export ANDROID_NDK_HOME="$$NDK$$"
+      - export XPRIVACYGUARD_UNSIGNED=true
+      - bash ../scripts/build-aether-android.sh --build-only --offline
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+UpdateCheckData: android-vpn/app/build.gradle.kts|versionCode\s*=\s*(\d+)|android-vpn/app/build.gradle.kts|versionName\s*=\s*"([^"]+)"
+CurrentVersion: 2.0.0
+CurrentVersionCode: 8
