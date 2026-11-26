@@ -4,131 +4,512 @@
     <meta charset="utf-8" />
     <title>xPrivacyGuard</title>
     <style>
+      :root {
+        color-scheme: dark;
+        --bg: #121214;
+        --surface: #1a1a1e;
+        --surface-2: #222227;
+        --border: #2c2c33;
+        --border-subtle: #24242b;
+        --text: #f4f4f5;
+        --text-secondary: #a1a1aa;
+        --text-muted: #71717a;
+        --accent: #f38020;
+        --accent-bright: #faad3f;
+        --accent-soft: rgba(243, 128, 32, 0.14);
+        --accent-border: rgba(243, 128, 32, 0.4);
+        --green: #22c55e;
+        --green-bg: #0e2918;
+        --green-border: rgba(34, 197, 94, 0.35);
+        --red: #ef4444;
+        --red-soft: #fca5a5;
+        --red-bg: #331417;
+        --red-border: rgba(239, 68, 68, 0.4);
+      }
+
       * { box-sizing: border-box; }
+
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        margin: 0; padding: 16px; width: 320px;
-        background-color: #121214; color: #f4f4f5;
+        margin: 0;
+        padding: 12px;
+        width: 332px;
+        background-color: var(--bg);
+        color: var(--text);
+        accent-color: var(--accent);
+        scrollbar-color: #3f3f46 var(--bg);
       }
+
+      ::selection {
+        background: rgba(243, 128, 32, 0.35);
+        color: var(--text);
+      }
+
+      button:focus-visible,
+      select:focus-visible,
+      input:focus-visible,
+      a:focus-visible {
+        outline: 2px solid var(--accent-bright);
+        outline-offset: 1px;
+      }
+
       .header {
-        display: flex; align-items: center; justify-content: space-between;
-        margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #2c2c33;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding-bottom: 9px;
+        border-bottom: 1px solid var(--border);
       }
-      .brand { display: flex; align-items: center; gap: 10px; }
-      .brand img { width: 28px; height: 28px; border-radius: 6px; }
-      .header h1 { margin: 0; font-size: 17px; font-weight: 700; color: #f4f4f5; }
-      .header span { font-size: 11px; background: #2b1b0e; color: #f38020; border: 1px solid rgba(243, 128, 32, 0.35); padding: 2px 6px; border-radius: 4px; font-weight: 600; }
-      .card { background: #1a1a1e; border: 1px solid #2c2c33; border-radius: 8px; padding: 12px; margin-bottom: 14px; }
-      .card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #a1a1aa; margin-bottom: 6px; }
-      .domain-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
-      .domain-name { font-size: 14px; font-weight: 600; color: #f4f4f5; word-break: break-all; }
-      .badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 12px; white-space: nowrap; }
-      .badge-protected { background: #0e2918; color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.35); }
-      .badge-excluded { background: #2b1b0e; color: #faad3f; border: 1px solid rgba(250, 173, 63, 0.35); }
-      .badge-disabled { background: #331417; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); }
-      .site-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .brand img {
+        width: 22px;
+        height: 22px;
+        border-radius: 5px;
+        display: block;
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: var(--text);
+      }
+
+      .version-pill {
+        font-size: 10px;
+        background: #2b1b0e;
+        color: var(--accent);
+        border: 1px solid var(--accent-border);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 11px;
+        margin-bottom: 8px;
+      }
+
+      .card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 7px;
+      }
+
+      .card-title {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-secondary);
+      }
+
+      .domain-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .domain-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
+      }
+
+      .badge {
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 7px;
+        border-radius: 999px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .badge-protected {
+        background: var(--green-bg);
+        color: var(--green);
+        border: 1px solid var(--green-border);
+      }
+
+      .badge-excluded {
+        background: #2b1b0e;
+        color: var(--accent-bright);
+        border: 1px solid var(--accent-border);
+      }
+
+      .badge-disabled {
+        background: var(--red-bg);
+        color: var(--red);
+        border: 1px solid var(--red-border);
+      }
+
+      .action-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      button {
+        cursor: pointer;
+        font-family: inherit;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 5px 10px;
+        height: 29px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        transition: background-color 0.14s, border-color 0.14s, color 0.14s;
+      }
+
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .btn-flex {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: var(--bg);
+        border: 1px solid transparent;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: var(--accent-bright);
+      }
+
+      .btn-amber-soft {
+        background: var(--accent-soft);
+        color: var(--accent-bright);
+        border: 1px solid var(--accent-border);
+      }
+
+      .btn-amber-soft:hover:not(:disabled) {
+        background: var(--accent);
+        color: var(--bg);
+        border-color: var(--accent);
+      }
+
+      .btn-secondary {
+        background: var(--surface-2);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+
+      .btn-secondary:hover:not(:disabled) {
+        background: #2c2c33;
+        border-color: #3a3a44;
+      }
+
+      .btn-inline {
+        height: 24px;
+        padding: 2px 9px;
+        font-size: 11px;
+        border-radius: 5px;
+      }
+
       .mute-btn {
-        display: inline-flex; align-items: center; justify-content: center; gap: 4px;
-        width: auto; padding: 3px 7px; font-size: 11px; font-weight: 600;
-        border-radius: 6px; border: 1px solid #2c2c33;
-        background-color: #222227; color: #a1a1aa; cursor: pointer;
-        transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+        flex-shrink: 0;
+        padding: 5px 9px;
+        background: var(--surface-2);
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
       }
-      .mute-btn:hover:not(:disabled) { background-color: #2c2c33; color: #f4f4f5; }
-      .mute-btn.is-muted { background-color: #331417; border-color: #ef4444; color: #fca5a5; }
-      .mute-btn.is-muted:hover:not(:disabled) { background-color: #4c1d22; color: #fecaca; }
-      .mute-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-      .mute-btn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
-      button { cursor: pointer; font-family: inherit; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; padding: 8px 12px; width: 100%; }
-      .btn-primary { background-color: #f38020; color: #121214; }
-      .btn-primary:hover:not(:disabled) { background-color: #faad3f; }
-      .btn-warning { background-color: #faad3f; color: #121214; }
-      .btn-secondary { background-color: #222227; color: #f4f4f5; border: 1px solid #2c2c33; }
-      .btn-secondary:hover:not(:disabled) { background-color: #2c2c33; }
-      .reload-notice { font-size: 11px; color: #a1a1aa; margin-top: 6px; text-align: center; }
-      .section-label { font-size: 12px; font-weight: 600; color: #a1a1aa; margin-bottom: 6px; display: block; }
-      select { width: 100%; padding: 6px 10px; border-radius: 6px; border: 1px solid #2c2c33; background: #1a1a1e; font-size: 13px; color: #f4f4f5; margin-bottom: 12px; }
-      .domain-list { max-height: 120px; overflow-y: auto; margin-bottom: 8px; }
-      .domain-item { display: flex; align-items: center; justify-content: space-between; background: #1a1a1e; border: 1px solid #2c2c33; padding: 6px 10px; border-radius: 4px; margin-bottom: 4px; font-size: 12px; word-break: break-all; }
-      .domain-item .remove-btn { background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; padding: 0 4px; width: auto; }
-      .add-domain-box { display: flex; gap: 6px; }
-      .add-domain-box input { flex: 1; padding: 6px 8px; border-radius: 6px; border: 1px solid #2c2c33; background: #1a1a1e; color: #f4f4f5; font-size: 12px; }
-      .add-domain-box button { width: auto; padding: 6px 12px; font-size: 12px; }
-      .empty-state { font-size: 11px; color: #71717a; font-style: italic; padding: 4px 0; }
-      .footer { margin-top: 14px; text-align: center; border-top: 1px solid #2c2c33; padding-top: 10px; }
-      .footer a { color: #f38020; text-decoration: none; font-size: 12px; font-weight: 600; }
-      .footer a:hover { color: #faad3f; }
-      .footer a + a { display: inline-block; margin-top: 8px; }
-      .filter-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 8px; }
-      .filter-stat { padding: 7px; border-radius: 5px; background: #121214; border: 1px solid #2c2c33; text-align: center; }
-      .filter-stat strong { display: block; font-size: 17px; color: #f38020; }
-      .filter-stat span { color: #a1a1aa; font-size: 10px; }
-      .filter-status { font-size: 12px; color: #a1a1aa; margin-bottom: 9px; }
+
+      .mute-btn:hover:not(:disabled) {
+        background: #2c2c33;
+        color: var(--text);
+      }
+
+      .mute-btn.is-muted {
+        background: var(--red-bg);
+        border-color: var(--red-border);
+        color: var(--red-soft);
+      }
+
+      .mute-btn.is-muted:hover:not(:disabled) {
+        background: #4c1d22;
+        color: #fecaca;
+      }
+
+      .mute-btn svg {
+        width: 12px;
+        height: 12px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        display: block;
+      }
+
+      .hint {
+        font-size: 10.5px;
+        color: var(--text-muted);
+        margin-top: 6px;
+        line-height: 1.35;
+      }
+
+      .filter-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+
+      .filter-stat {
+        padding: 6px 4px;
+        border-radius: 6px;
+        background: var(--bg);
+        border: 1px solid var(--border-subtle);
+        text-align: center;
+      }
+
+      .filter-stat strong {
+        display: block;
+        font-size: 15px;
+        line-height: 1.15;
+        font-variant-numeric: tabular-nums;
+        color: var(--accent);
+      }
+
+      .filter-stat span {
+        color: var(--text-secondary);
+        font-size: 10px;
+      }
+
+      .mode-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .mode-row label {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        white-space: nowrap;
+      }
+
+      select {
+        flex: 1;
+        min-width: 0;
+        height: 28px;
+        padding: 3px 8px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        font-size: 12px;
+        color: var(--text);
+        font-family: inherit;
+      }
+
+      .divider {
+        height: 1px;
+        background: var(--border-subtle);
+        margin: 9px 0;
+      }
+
+      .domain-list {
+        max-height: 84px;
+        overflow-y: auto;
+        margin-top: 6px;
+        scrollbar-color: #3f3f46 var(--surface);
+      }
+
+      .domain-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        background: var(--bg);
+        border: 1px solid var(--border-subtle);
+        padding: 3px 8px;
+        border-radius: 5px;
+        margin-bottom: 4px;
+        font-size: 11.5px;
+        color: var(--text);
+      }
+
+      .domain-item span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .domain-item .remove-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-weight: 700;
+        height: 20px;
+        padding: 0 4px;
+        font-size: 11px;
+        flex-shrink: 0;
+      }
+
+      .domain-item .remove-btn:hover {
+        color: var(--red);
+      }
+
+      .add-domain-box {
+        display: flex;
+        gap: 6px;
+      }
+
+      .add-domain-box input {
+        flex: 1;
+        min-width: 0;
+        height: 28px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--text);
+        font-size: 11.5px;
+        font-family: inherit;
+      }
+
+      .add-domain-box input::placeholder {
+        color: var(--text-muted);
+      }
+
+      .add-domain-box button {
+        height: 28px;
+        padding: 0 10px;
+        font-size: 11.5px;
+      }
+
+      .empty-state {
+        font-size: 11px;
+        color: var(--text-muted);
+        font-style: italic;
+        padding: 2px 0;
+      }
+
+      .footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid var(--border);
+      }
+
+      .footer a {
+        color: var(--accent);
+        text-decoration: none;
+        font-size: 11.5px;
+        font-weight: 600;
+        padding: 2px 4px;
+        border-radius: 4px;
+      }
+
+      .footer a:hover {
+        color: var(--accent-bright);
+        background: var(--accent-soft);
+      }
     </style>
   </head>
   <body>
     <div class="header">
       <div class="brand">
-        <img src="icons/icon32.png" alt="xPrivacyGuard Logo">
+        <img src="icons/icon32.png" alt="xPrivacyGuard Logo" />
         <h1>xPrivacyGuard</h1>
       </div>
-      <span>Desktop</span>
+      <span class="version-pill">Desktop</span>
     </div>
+
     <div class="card">
-      <div class="card-title">Current Site</div>
-      <div class="domain-row">
-        <span class="domain-name" id="current-domain">Detecting...</span>
-        <div class="site-actions">
-          <button id="site-mute-btn" class="mute-btn" title="Mute site audio" aria-label="Mute site audio" disabled>
-            <span id="mute-icon"></span>
-            <span id="mute-label">Mute</span>
-          </button>
-          <span class="badge badge-disabled" id="status-badge">-</span>
-        </div>
+      <div class="card-head">
+        <span class="card-title">Current Site</span>
+        <span class="badge badge-disabled" id="status-badge">-</span>
       </div>
-      <button id="toggle-exclude-btn" disabled>Detecting tab...</button>
-      <div class="reload-notice">Page will reload automatically when toggled</div>
+      <div class="domain-row">
+        <span class="domain-name" id="current-domain">Detecting…</span>
+      </div>
+      <div class="action-row">
+        <button id="toggle-exclude-btn" class="btn-secondary btn-flex" type="button" disabled>Detecting tab…</button>
+        <button id="site-mute-btn" class="mute-btn" type="button" title="Mute site audio" aria-label="Mute site audio" disabled>
+          <span id="mute-icon"></span>
+          <span id="mute-label">Mute</span>
+        </button>
+      </div>
+      <div class="hint">Reloads tab when site protection is toggled.</div>
     </div>
+
     <div class="card">
-      <div class="card-title">Ads &amp; Trackers</div>
-      <div class="filter-status" id="filter-status">Loading filter status…</div>
-      <button id="toggle-filter-site" class="btn-primary" disabled>Detecting site…</button>
-      <div class="reload-notice">Filter settings apply after the page reloads</div>
+      <div class="card-head">
+        <span class="card-title">Ads &amp; Trackers</span>
+        <button id="toggle-filter-site" class="btn-amber-soft btn-inline" type="button" disabled>Detecting…</button>
+      </div>
       <div class="filter-stats">
         <div class="filter-stat"><strong id="filter-blocked">0</strong><span>Blocked</span></div>
         <div class="filter-stat"><strong id="filter-cosmetic">0</strong><span>Cosmetic</span></div>
+        <div class="filter-stat"><strong id="filter-list-count">0</strong><span>Lists</span></div>
       </div>
-      <div class="reload-notice" id="filter-list-count">Filter lists: 0</div>
-      <div class="reload-notice">Network match counts require optional DNR feedback permission.</div>
+      <div class="hint" id="filter-status">Loading filter status…</div>
     </div>
-    <div class="card" id="peacock-diagnostics-card" hidden>
-      <div class="card-title">Peacock Ad Diagnostics</div>
-      <div class="filter-status" id="peacock-diagnostics-status">Capture is off.</div>
-      <button id="peacock-diagnostics-toggle" class="btn-primary">Start capture</button>
-      <div style="display:flex;gap:6px;margin-top:6px">
-        <button id="peacock-diagnostics-export" class="btn-secondary" disabled>Export log</button>
-        <button id="peacock-diagnostics-clear" class="btn-secondary" disabled>Clear</button>
+
+    <div class="card">
+      <div class="mode-row">
+        <label for="mode-select">Mode</label>
+        <select id="mode-select">
+          <option value="daily">Daily browsing</option>
+          <option value="cautious">Cautious browsing</option>
+        </select>
       </div>
-      <div class="reload-notice">Records completed and failed Peacock-initiated requests, including media type and response status. Sensitive query values are redacted. Capture never blocks or modifies traffic.</div>
+      <div class="hint">Cautious adds stricter protections; reload tabs after changing.</div>
+
+      <div class="divider"></div>
+
+      <div class="card-head" style="margin-bottom: 6px;">
+        <span class="card-title">Excluded Sites (<span id="excluded-count">0</span>)</span>
+      </div>
+      <div class="add-domain-box">
+        <input type="text" id="new-domain-input" placeholder="Add domain (e.g. example.com)" aria-label="Add excluded domain" />
+        <button class="btn-secondary" id="add-domain-btn" type="button">Add</button>
+      </div>
+      <div class="domain-list" id="excluded-list">
+        <div class="empty-state">No excluded sites yet</div>
+      </div>
     </div>
-    <label for="mode-select" class="section-label">Protection Mode</label>
-    <select id="mode-select">
-      <option value="daily">Daily browsing</option>
-      <option value="cautious">Cautious browsing (testing or suspicious sites)</option>
-    </select>
-    <div class="reload-notice">Cautious browsing adds protections that may break site features. Reload open tabs after changing modes.</div>
-    <label for="new-domain-input" class="section-label">Excluded Sites (<span id="excluded-count">0</span>)</label>
-    <div class="domain-list" id="excluded-list">
-      <div class="empty-state">No excluded sites yet</div>
-    </div>
-    <div class="add-domain-box">
-      <input type="text" id="new-domain-input" placeholder="e.g. example.com" />
-      <button class="btn-secondary" id="add-domain-btn">Add</button>
-    </div>
-    <div class="footer" style="display: flex; justify-content: space-between; align-items: center;">
+
+    <div class="footer">
       <a href="#" id="open-options-link">Settings</a>
+      <a href="#" id="open-diagnostics-link">Diagnostics</a>
       <a href="https://xconflictionx.cc/tools/privacy-test/" target="_blank" rel="noopener noreferrer">Test Page</a>
     </div>
+
     <script src="popup.js"></script>
   </body>
 </html>

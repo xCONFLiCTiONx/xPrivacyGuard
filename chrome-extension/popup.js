@@ -8,16 +8,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   const newDomainInput = document.getElementById("new-domain-input");
   const addDomainBtn = document.getElementById("add-domain-btn");
   const openOptionsLink = document.getElementById("open-options-link");
+  const openDiagnosticsLink = document.getElementById("open-diagnostics-link");
   const filterStatusEl = document.getElementById("filter-status");
   const toggleFilterBtn = document.getElementById("toggle-filter-site");
   const siteMuteBtn = document.getElementById("site-mute-btn");
   const muteIconEl = document.getElementById("mute-icon");
   const muteLabelEl = document.getElementById("mute-label");
-  const peacockDiagnosticsCard = document.getElementById("peacock-diagnostics-card");
-  const peacockDiagnosticsStatus = document.getElementById("peacock-diagnostics-status");
-  const peacockDiagnosticsToggle = document.getElementById("peacock-diagnostics-toggle");
-  const peacockDiagnosticsExport = document.getElementById("peacock-diagnostics-export");
-  const peacockDiagnosticsClear = document.getElementById("peacock-diagnostics-clear");
 
   let activeTab = null;
   let activeDomain = "";
@@ -55,86 +51,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  function isPeacockSite() {
-    return activeDomain === "peacocktv.com" || activeDomain.endsWith(".peacocktv.com");
-  }
-
-  async function refreshPeacockDiagnostics() {
-    if (!peacockDiagnosticsCard) return;
-    // Keep the control visible on every tab; relying on active-tab hostname
-    // detection hid the only way to start capture on some Peacock sessions.
-    peacockDiagnosticsCard.hidden = false;
-    const result = await chrome.runtime.sendMessage({ action: "getPeacockDiagnostics" });
-    if (!result || !result.success) {
-      peacockDiagnosticsStatus.textContent = "Could not read diagnostics status. Check the extension service worker.";
-      return;
-    }
-    const siteHint = isPeacockSite() ? "" : " Open Peacock in another tab before starting capture.";
-    peacockDiagnosticsStatus.textContent = result.enabled
-      ? `Capture is ON · ${result.count} events recorded (maximum 1,000).${siteHint}`
-      : `Capture is OFF · ${result.count} saved events.${siteHint}`;
-    peacockDiagnosticsToggle.textContent = result.enabled ? "Stop capture" : "Start capture";
-    peacockDiagnosticsToggle.className = result.enabled ? "btn-warning" : "btn-primary";
-    peacockDiagnosticsExport.disabled = result.count === 0;
-    peacockDiagnosticsClear.disabled = result.count === 0;
-  }
-
-  async function exportPeacockDiagnostics() {
-    const result = await chrome.runtime.sendMessage({
-      action: "getPeacockDiagnostics",
-      includeLog: true
-    });
-    if (!result || !result.success) throw new Error(result && result.error || "Could not export diagnostics.");
-    const report = {
-      product: "xPrivacyGuard Desktop",
-      diagnostic: "Peacock request capture",
-      exportedAt: new Date().toISOString(),
-      eventCount: (result.log || []).length,
-      events: result.log || []
-    };
-    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
-    const objectUrl = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = objectUrl;
-    link.download = `xPrivacyGuard-peacock-diagnostics-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-  }
-
-  if (peacockDiagnosticsToggle) {
-    peacockDiagnosticsToggle.addEventListener("click", async () => {
-      try {
-        const current = await chrome.runtime.sendMessage({ action: "getPeacockDiagnostics" });
-        const result = await chrome.runtime.sendMessage({
-          action: "setPeacockDiagnostics",
-          enabled: !(current && current.enabled)
-        });
-        if (!result || !result.success) throw new Error(result && result.error || "Could not change capture state.");
-        await refreshPeacockDiagnostics();
-      } catch (error) {
-        alert(`Peacock diagnostics error: ${error.message}`);
-      }
-    });
-  }
-  if (peacockDiagnosticsExport) {
-    peacockDiagnosticsExport.addEventListener("click", () => {
-      exportPeacockDiagnostics().catch((error) => alert(`Export failed: ${error.message}`));
-    });
-  }
-  if (peacockDiagnosticsClear) {
-    peacockDiagnosticsClear.addEventListener("click", async () => {
-      if (!confirm("Clear the saved Peacock diagnostics log?")) return;
-      const result = await chrome.runtime.sendMessage({ action: "clearPeacockDiagnostics" });
-      if (!result || !result.success) {
-        alert("Could not clear the Peacock diagnostics log.");
-        return;
-      }
-      await refreshPeacockDiagnostics();
-    });
-  }
-
   async function loadState() {
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tabs && tabs.length > 0) {
@@ -162,7 +78,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     filterDisabledDomains = data.filterDisabledDomains || [];
     mutedSites = data.mutedSites || [];
     updateUI();
-    await refreshPeacockDiagnostics();
+
     if (isWebPage) {
       const filterData = await chrome.runtime.sendMessage({
         action: "getFilterData",
@@ -172,7 +88,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("filter-blocked").textContent = String(filterData.stats.blocked || 0);
         document.getElementById("filter-cosmetic").textContent = String(filterData.stats.cosmetic || 0);
         document.getElementById("filter-list-count").textContent =
-          `Filter lists: ${(filterData.lists || []).filter((list) => list.enabled !== false).length}`;
+          String((filterData.lists || []).filter((list) => list.enabled !== false).length);
       }
     }
   }
@@ -180,26 +96,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   function updateUI() {
     if (!isWebPage || !activeDomain) {
       currentDomainEl.textContent = "Non-web page";
+      currentDomainEl.title = "";
       statusBadgeEl.textContent = "Disabled";
       statusBadgeEl.className = "badge badge-disabled";
       toggleBtn.disabled = true;
       toggleBtn.textContent = "Exclusion unavailable";
-      toggleBtn.className = "btn-secondary";
+      toggleBtn.className = "btn-secondary btn-flex";
     } else {
       currentDomainEl.textContent = activeDomain;
+      currentDomainEl.title = activeDomain;
       const excluded = isDomainExcluded(activeDomain, excludedDomains);
       if (excluded) {
         statusBadgeEl.textContent = "Excluded";
         statusBadgeEl.className = "badge badge-excluded";
         toggleBtn.disabled = false;
-        toggleBtn.textContent = "Re-enable Protection";
-        toggleBtn.className = "btn-secondary";
+        toggleBtn.textContent = "Re-enable protection";
+        toggleBtn.className = "btn-primary btn-flex";
       } else {
         statusBadgeEl.textContent = "Protected";
         statusBadgeEl.className = "badge badge-protected";
         toggleBtn.disabled = false;
         toggleBtn.textContent = `Exclude ${activeDomain}`;
-        toggleBtn.className = "btn-warning";
+        toggleBtn.title = `Exclude ${activeDomain}`;
+        toggleBtn.className = "btn-amber-soft btn-flex";
       }
     }
 
@@ -232,16 +151,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const filterDisabled = isDomainExcluded(activeDomain, filterDisabledDomains);
     if (!isWebPage || !activeDomain) {
-      filterStatusEl.textContent = "Unavailable on this page";
+      filterStatusEl.textContent = "Unavailable on this page.";
       toggleFilterBtn.disabled = true;
-      toggleFilterBtn.textContent = "Filtering unavailable";
+      toggleFilterBtn.textContent = "Unavailable";
+      toggleFilterBtn.className = "btn-secondary btn-inline";
     } else {
       filterStatusEl.textContent = filterDisabled
-        ? "Ads and tracker filtering is off for this site."
-        : "Ads and tracker filtering is on for this site.";
+        ? "Filtering is off on this site · Reload applies changes."
+        : "Filtering active · Network counts use optional DNR feedback.";
       toggleFilterBtn.disabled = false;
-      toggleFilterBtn.textContent = filterDisabled ? "Enable filtering on this site" : "Disable filtering on this site";
-      toggleFilterBtn.className = filterDisabled ? "btn-primary" : "btn-warning";
+      toggleFilterBtn.textContent = filterDisabled ? "Enable" : "Disable";
+      toggleFilterBtn.className = filterDisabled ? "btn-primary btn-inline" : "btn-amber-soft btn-inline";
     }
 
     excludedCountEl.textContent = excludedDomains.length;
@@ -258,10 +178,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         itemDiv.className = "domain-item";
         const textSpan = document.createElement("span");
         textSpan.textContent = domain;
+        textSpan.title = domain;
         const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
         removeBtn.className = "remove-btn";
         removeBtn.textContent = "✕";
         removeBtn.title = `Remove ${domain}`;
+        removeBtn.setAttribute("aria-label", `Remove ${domain}`);
         removeBtn.onclick = () => removeDomain(domain);
         itemDiv.appendChild(textSpan);
         itemDiv.appendChild(removeBtn);
@@ -420,6 +343,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     e.preventDefault();
     chrome.runtime.openOptionsPage();
   });
+  if (openDiagnosticsLink) {
+    openDiagnosticsLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      chrome.tabs.create({ url: chrome.runtime.getURL("settings.html#diagnostics") });
+    });
+  }
 
   if (chrome.storage && chrome.storage.onChanged) {
     chrome.storage.onChanged.addListener((changes, namespace) => {
