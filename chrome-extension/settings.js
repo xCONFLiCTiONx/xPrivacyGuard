@@ -795,7 +795,373 @@ if (typeof document !== "undefined") {
     });
   }
 
-  loadSettings().catch((error) => {
+  // Accessible Tabs Navigation (supports #general, #filters, #debug, #diagnostics)
+  const tabButtons = Array.from(document.querySelectorAll('.tablist [role="tab"]'));
+  const tabPanels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+
+  function selectTab(targetTab, { updateHash = true } = {}) {
+    if (!targetTab) return;
+    const panelId = targetTab.dataset.panel;
+    for (const tab of tabButtons) {
+      const selected = tab === targetTab;
+      tab.setAttribute("aria-selected", selected ? "true" : "false");
+      tab.tabIndex = selected ? 0 : -1;
+    }
+    for (const panel of tabPanels) {
+      const isMatch = panel.id === panelId;
+      if (isMatch) {
+        panel.removeAttribute("hidden");
+      } else {
+        panel.setAttribute("hidden", "until-found");
+      }
+    }
+    if (updateHash && panelId) {
+      const hashName = panelId.replace(/^panel-/, "");
+      if (location.hash !== `#${hashName}`) {
+        history.replaceState(null, "", `#${hashName}`);
+      }
+    }
+  }
+
+  tabButtons.forEach((tab, index) => {
+    tab.tabIndex = tab.getAttribute("aria-selected") === "true" ? 0 : -1;
+    tab.addEventListener("click", () => selectTab(tab));
+    tab.addEventListener("keydown", (e) => {
+      let nextIndex = null;
+      if (e.key === "ArrowRight") nextIndex = (index + 1) % tabButtons.length;
+      else if (e.key === "ArrowLeft") nextIndex = (index - 1 + tabButtons.length) % tabButtons.length;
+      else if (e.key === "Home") nextIndex = 0;
+      else if (e.key === "End") nextIndex = tabButtons.length - 1;
+      if (nextIndex !== null) {
+        e.preventDefault();
+        tabButtons[nextIndex].focus();
+        selectTab(tabButtons[nextIndex]);
+      }
+    });
+  });
+
+  tabPanels.forEach((panel) => {
+    panel.addEventListener("beforematch", () => {
+      const ownerTab = tabButtons.find((t) => t.dataset.panel === panel.id);
+      if (ownerTab) selectTab(ownerTab);
+    });
+  });
+
+  function syncTabFromHash() {
+    const hash = (location.hash || "").replace(/^#/, "").toLowerCase();
+    if (!hash) return;
+    const match = tabButtons.find((t) => t.dataset.panel === `panel-${hash}`);
+    if (match) selectTab(match, { updateHash: false });
+  }
+  syncTabFromHash();
+  window.addEventListener("hashchange", syncTabFromHash);
+
+  // Site & Stream Diagnostics Workbench
+  const diagDomainInput = document.getElementById("diag-domain-input");
+  const diagToggleBtn = document.getElementById("diag-toggle-btn");
+  const diagStatusEl = document.getElementById("diag-status");
+  const diagFilterType = document.getElementById("diag-filter-type");
+  const diagSearchInput = document.getElementById("diag-search");
+  const diagEventLogEl = document.getElementById("diag-event-log");
+  const diagCopySummaryBtn = document.getElementById("diag-copy-summary-btn");
+  const diagCopyJsonBtn = document.getElementById("diag-copy-json-btn");
+  const diagExportJsonBtn = document.getElementById("diag-export-json-btn");
+  const diagClearBtn = document.getElementById("diag-clear-btn");
+  const diagLiveUpdateCheckbox = document.getElementById("diag-live-update");
+  const diagTabBadge = document.getElementById("diag-tab-badge");
+  const diagPresetButtons = Array.from(document.querySelectorAll("#diag-presets .chip-btn"));
+
+  let diagState = { enabled: false, targetDomain: "peacocktv.com", events: [] };
+
+  async function copyTextToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+  }
+
+  function updateDiagPresetHighlight(domain) {
+    const normalized = String(domain || "").trim().toLowerCase();
+    for (const btn of diagPresetButtons) {
+      btn.classList.toggle("is-active", (btn.dataset.domain || "").toLowerCase() === normalized);
+    }
+  }
+
+  function getFilteredDiagEvents() {
+    const filter = diagFilterType ? diagFilterType.value : "all";
+    const query = (diagSearchInput ? diagSearchInput.value : "").trim().toLowerCase();
+    return (diagState.events || []).filter((ev) => {
+      if (filter === "problems" && ev.outcome !== "http-error" && ev.outcome !== "failed") return false;
+      if (filter === "http-error" && ev.outcome !== "http-error") return false;
+      if (filter === "failed" && ev.outcome !== "failed") return false;
+      if (filter === "concurrency" && ev.classification !== "concurrency" && ev.classification !== "drm") return false;
+      if (filter === "media" && ev.classification !== "media") return false;
+      if (filter === "ad-delivery" && ev.classification !== "ad-delivery") return false;
+      if (query) {
+        const hay = [
+          ev.method,
+          ev.statusCode,
+          ev.error,
+          ev.classification,
+          ev.url,
+          ev.requestHeaders && ev.requestHeaders["content-type"],
+          ev.responseHeaders && ev.responseHeaders["content-type"]
+        ].filter(Boolean).join(" ").toLowerCase();
+        if (!hay.includes(query)) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderDiagnostics() {
+    if (!diagEventLogEl) return;
+    const total = diagState.events.length;
+    const problemsCount = diagState.events.filter((e) => e.outcome === "http-error" || e.outcome === "failed").length;
+
+    if (diagDomainInput && document.activeElement !== diagDomainInput) {
+      diagDomainInput.value = diagState.targetDomain || "peacocktv.com";
+    }
+    updateDiagPresetHighlight(diagState.targetDomain);
+
+    if (diagStatusEl) {
+      const scope = diagState.targetDomain === "*" ? "all sites" : diagState.targetDomain;
+      diagStatusEl.textContent = diagState.enabled
+        ? `Capture is ON (${scope}) · ${total} events recorded (${problemsCount} errors/blocked, max 1,500).`
+        : `Capture is OFF (${scope}) · ${total} saved events (${problemsCount} errors/blocked).`;
+    }
+    if (diagToggleBtn) {
+      diagToggleBtn.textContent = diagState.enabled ? "Stop Capture" : "Start Capture";
+      diagToggleBtn.className = diagState.enabled ? "btn btn-danger" : "btn";
+    }
+    if (diagTabBadge) {
+      diagTabBadge.hidden = !diagState.enabled && total === 0;
+      diagTabBadge.textContent = diagState.enabled ? `LIVE · ${total}` : String(total);
+      diagTabBadge.classList.toggle("is-live", diagState.enabled);
+    }
+    const empty = total === 0;
+    if (diagCopySummaryBtn) diagCopySummaryBtn.disabled = empty;
+    if (diagCopyJsonBtn) diagCopyJsonBtn.disabled = empty;
+    if (diagExportJsonBtn) diagExportJsonBtn.disabled = empty;
+    if (diagClearBtn) diagClearBtn.disabled = empty;
+
+    const filtered = getFilteredDiagEvents();
+    diagEventLogEl.replaceChildren();
+    if (!filtered.length) {
+      const div = document.createElement("div");
+      div.className = "empty-notice";
+      div.textContent = total === 0
+        ? "No captured events yet. Choose a target domain and click Start Capture."
+        : "No events match the current filter.";
+      diagEventLogEl.appendChild(div);
+      return;
+    }
+
+    // Show newest first (cap DOM render to latest 300 for responsiveness; export includes all)
+    const slice = filtered.slice(-300).reverse();
+    const frag = document.createDocumentFragment();
+    for (const ev of slice) {
+      const row = document.createElement("div");
+      row.className = "diag-row"
+        + (ev.outcome === "http-error" ? " is-error" : ev.outcome === "failed" ? " is-blocked" : "");
+
+      const head = document.createElement("div");
+      head.className = "diag-row-head";
+
+      const timeSpan = document.createElement("span");
+      timeSpan.className = "pill";
+      timeSpan.textContent = ev.timestamp ? new Date(ev.timestamp).toLocaleTimeString() : "";
+
+      const methodSpan = document.createElement("span");
+      methodSpan.className = "pill pill-method";
+      methodSpan.textContent = ev.method || "GET";
+
+      const statusSpan = document.createElement("span");
+      if (ev.outcome === "http-error") {
+        statusSpan.className = "pill pill-err";
+        statusSpan.textContent = `HTTP ${ev.statusCode}`;
+      } else if (ev.outcome === "failed") {
+        statusSpan.className = "pill pill-warn";
+        statusSpan.textContent = (ev.error || "FAILED").replace(/^net::/, "");
+      } else {
+        statusSpan.className = "pill pill-ok";
+        statusSpan.textContent = ev.statusCode ? `${ev.statusCode}` : "OK";
+      }
+
+      const classSpan = document.createElement("span");
+      classSpan.className = "pill";
+      classSpan.textContent = ev.classification || "other";
+
+      head.append(timeSpan, methodSpan, statusSpan, classSpan);
+
+      const urlDiv = document.createElement("div");
+      urlDiv.className = "diag-url";
+      urlDiv.textContent = ev.url || "";
+
+      row.append(head, urlDiv);
+
+      const reqCt = ev.requestHeaders && ev.requestHeaders["content-type"];
+      const resCt = ev.responseHeaders && ev.responseHeaders["content-type"];
+      if (reqCt || resCt) {
+        const hdrDiv = document.createElement("div");
+        hdrDiv.className = "diag-headers";
+        const parts = [];
+        if (reqCt) parts.push(`req: ${reqCt}`);
+        if (resCt) parts.push(`res: ${resCt}`);
+        hdrDiv.textContent = parts.join("  |  ");
+        row.appendChild(hdrDiv);
+      }
+
+      frag.appendChild(row);
+    }
+    diagEventLogEl.appendChild(frag);
+  }
+
+  async function refreshDiagnostics() {
+    try {
+      const res = await chrome.runtime.sendMessage({ action: "getSiteDiagnostics", includeLog: true });
+      if (!res || !res.success) return;
+      diagState = {
+        enabled: res.enabled === true,
+        targetDomain: res.targetDomain || "peacocktv.com",
+        events: Array.isArray(res.log) ? res.log : []
+      };
+      renderDiagnostics();
+    } catch (err) {
+      console.warn("xPrivacyGuard: Could not load site diagnostics:", err);
+    }
+  }
+
+  function buildDiagnosticsReport() {
+    return {
+      product: "xPrivacyGuard Desktop",
+      diagnostic: "Site & stream request capture",
+      targetDomain: diagState.targetDomain,
+      exportedAt: new Date().toISOString(),
+      eventCount: diagState.events.length,
+      events: diagState.events
+    };
+  }
+
+  function buildProblemsSummary() {
+    const important = diagState.events.filter(
+      (ev) => ev.outcome === "http-error" || ev.outcome === "failed" || ev.classification === "concurrency" || ev.classification === "drm"
+    );
+    const list = important.length ? important : diagState.events;
+    const lines = [
+      `xPrivacyGuard Site Diagnostics (${diagState.targetDomain}) · ${new Date().toISOString()}`,
+      `Total events: ${diagState.events.length} · Highlighted: ${list.length}`,
+      ""
+    ];
+    for (const ev of list) {
+      const status = ev.outcome === "http-error"
+        ? `HTTP ${ev.statusCode}`
+        : ev.outcome === "failed"
+          ? (ev.error || "FAILED")
+          : `HTTP ${ev.statusCode || 200}`;
+      const reqCt = ev.requestHeaders && ev.requestHeaders["content-type"] ? ` [req:${ev.requestHeaders["content-type"]}]` : "";
+      const resCt = ev.responseHeaders && ev.responseHeaders["content-type"] ? ` [res:${ev.responseHeaders["content-type"]}]` : "";
+      lines.push(`${ev.timestamp} | ${ev.method || "GET"} | ${status} | ${ev.classification}${reqCt}${resCt} | ${ev.url}`);
+    }
+    return lines.join("\n");
+  }
+
+  if (diagToggleBtn) {
+    diagToggleBtn.addEventListener("click", async () => {
+      try {
+        const targetDomain = (diagDomainInput && diagDomainInput.value.trim()) || "peacocktv.com";
+        const res = await chrome.runtime.sendMessage({
+          action: "setSiteDiagnostics",
+          enabled: !diagState.enabled,
+          targetDomain
+        });
+        if (!res || !res.success) throw new Error((res && res.error) || "Could not toggle capture.");
+        await refreshDiagnostics();
+        showSavedBanner(res.enabled ? `Capture started for ${res.targetDomain}` : "Capture stopped.");
+      } catch (err) {
+        showError(err);
+      }
+    });
+  }
+
+  diagPresetButtons.forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const domain = btn.dataset.domain || "peacocktv.com";
+      if (diagDomainInput) diagDomainInput.value = domain;
+      updateDiagPresetHighlight(domain);
+      try {
+        await chrome.runtime.sendMessage({
+          action: "setSiteDiagnostics",
+          enabled: diagState.enabled,
+          targetDomain: domain
+        });
+        await refreshDiagnostics();
+      } catch (err) {
+        showError(err);
+      }
+    });
+  });
+
+  if (diagFilterType) diagFilterType.addEventListener("change", renderDiagnostics);
+  if (diagSearchInput) diagSearchInput.addEventListener("input", renderDiagnostics);
+
+  if (diagCopySummaryBtn) {
+    diagCopySummaryBtn.addEventListener("click", async () => {
+      await copyTextToClipboard(buildProblemsSummary());
+      showSavedBanner("Problems summary copied to clipboard!");
+    });
+  }
+
+  if (diagCopyJsonBtn) {
+    diagCopyJsonBtn.addEventListener("click", async () => {
+      await copyTextToClipboard(JSON.stringify(buildDiagnosticsReport(), null, 2));
+      showSavedBanner("Diagnostics JSON copied to clipboard!");
+    });
+  }
+
+  if (diagExportJsonBtn) {
+    diagExportJsonBtn.addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(buildDiagnosticsReport(), null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const safeHost = (diagState.targetDomain === "*" ? "all-sites" : diagState.targetDomain).replace(/[^a-z0-9.-]/gi, "_");
+      link.download = `xPrivacyGuard-diagnostics-${safeHost}-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+  }
+
+  if (diagClearBtn) {
+    diagClearBtn.addEventListener("click", async () => {
+      const res = await chrome.runtime.sendMessage({ action: "clearSiteDiagnostics" });
+      if (!res || !res.success) {
+        showError("Could not clear diagnostics log.");
+        return;
+      }
+      await refreshDiagnostics();
+      showSavedBanner("Diagnostics log cleared.");
+    });
+  }
+
+  if (chrome.storage && chrome.storage.onChanged) {
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+      if (namespace === "local" && (changes.siteDiagnosticsLog || changes.siteDiagnosticsEnabled || changes.siteDiagnosticsDomain)) {
+        if (!diagLiveUpdateCheckbox || diagLiveUpdateCheckbox.checked) {
+          refreshDiagnostics();
+        }
+      }
+    });
+  }
+
+  loadSettings().then(() => refreshDiagnostics()).catch((error) => {
     console.error("xPrivacyGuard: Could not load settings:", error);
     showError(error);
   });
