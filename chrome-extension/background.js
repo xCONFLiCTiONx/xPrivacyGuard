@@ -112,11 +112,12 @@ async function syncFilterContentScript(excludedDomains, filterDisabledDomains) {
     js: ["filters/scriptlets.js", "filters/content.js"],
     runAt: "document_start"
   };
-  if (patterns.length) config.excludeMatches = patterns;
   const registered = await chrome.scripting.getRegisteredContentScripts({ ids: [config.id] });
   if (registered.length) {
+    config.excludeMatches = patterns;
     await chrome.scripting.updateContentScripts([config]);
   } else {
+    if (patterns.length) config.excludeMatches = patterns;
     await chrome.scripting.registerContentScripts([config]);
   }
 }
@@ -157,12 +158,14 @@ async function doSyncContentScripts() {
   });
 
   if (registered && registered.length > 0) {
+    scriptConfig.excludeMatches = excludePatterns;
     await chrome.scripting.updateContentScripts([scriptConfig]);
   } else {
     try {
       await chrome.scripting.registerContentScripts([scriptConfig]);
     } catch (err) {
       if (err && err.message && err.message.includes("Duplicate script ID")) {
+        scriptConfig.excludeMatches = excludePatterns;
         await chrome.scripting.updateContentScripts([scriptConfig]);
       } else {
         throw err;
@@ -189,6 +192,7 @@ async function doSyncContentScripts() {
 
   if (cautiousMode) {
     if (extremeRegistered && extremeRegistered.length > 0) {
+      extremeScriptConfig.excludeMatches = excludePatterns;
       await chrome.scripting.updateContentScripts([extremeScriptConfig]);
     } else {
       await chrome.scripting.registerContentScripts([extremeScriptConfig]);

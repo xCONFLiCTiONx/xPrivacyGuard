@@ -149,11 +149,11 @@
       }
 
       .panels-grid {
-        display: grid;
+        display: block;
       }
 
-      .panels-grid > [role="tabpanel"] {
-        grid-area: 1 / 1;
+      .panels-grid > [role="tabpanel"][hidden] {
+        pointer-events: none;
       }
 
       .panel-inner {
