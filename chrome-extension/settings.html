@@ -318,6 +318,17 @@
         margin-bottom: 14px;
       }
 
+      .notice-amber {
+        background: #2b1b0e;
+        color: var(--accent-bright);
+        border: 1px solid var(--accent-border);
+        padding: 10px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        line-height: 1.45;
+        margin-bottom: 12px;
+      }
+
       input[type="text"],
       input[type="url"],
       textarea {
@@ -573,6 +584,7 @@
     <div class="tablist" role="tablist" aria-label="Settings sections">
       <button type="button" role="tab" id="tab-general" aria-selected="true" data-panel="panel-general">General</button>
       <button type="button" role="tab" id="tab-filters" aria-selected="false" data-panel="panel-filters">Filters &amp; Rules</button>
+      <button type="button" role="tab" id="tab-cookies" aria-selected="false" data-panel="panel-cookies">Cookies</button>
       <button type="button" role="tab" id="tab-debug" aria-selected="false" data-panel="panel-debug">Filter Debug</button>
       <button type="button" role="tab" id="tab-diagnostics" aria-selected="false" data-panel="panel-diagnostics">
         Site Diagnostics<span id="diag-tab-badge" class="tab-badge" hidden>0</span>
@@ -626,12 +638,12 @@
 
           <div class="card">
             <h2>Backup &amp; Restore</h2>
-            <p class="muted">Export or import your xPrivacyGuard configuration, including protection mode, GPC toggle, excluded domains, muted sites, filter lists, and custom rules.</p>
+            <p class="muted">Export or import your complete xPrivacyGuard configuration — including protection mode, GPC toggle, excluded domains, muted sites, filter lists, custom rules, and Cookie Manager settings &amp; whitelist. Also imports legacy Cookie Manager (.json / .txt) backups without overwriting your other settings.</p>
             <div class="row-actions">
               <button class="btn" id="export-settings-btn" type="button">Export Settings</button>
               <button class="btn compact-btn" id="copy-settings-btn" type="button">Copy Settings</button>
               <button class="btn compact-btn" id="import-settings-btn" type="button">Import Settings</button>
-              <input type="file" id="import-settings-file" accept=".json,application/json" style="display: none;" />
+              <input type="file" id="import-settings-file" accept=".json,.txt,application/json,text/plain" style="display: none;" />
             </div>
           </div>
         </div>
@@ -677,6 +689,39 @@
               <button class="btn" id="add-filter-rule-btn" type="button">Add Rule</button>
             </div>
             <div id="custom-filter-rules"></div>
+          </div>
+        </div>
+      </div>
+
+      <div role="tabpanel" id="panel-cookies" aria-labelledby="tab-cookies" hidden="until-found">
+        <div class="panel-inner">
+          <div class="card">
+            <h2>Cookie Manager</h2>
+            <p class="muted">Automatically purge cookies, localStorage, IndexedDB, Cache Storage, and Service Workers for unwhitelisted sites once their tabs are closed. Open tabs and whitelisted domains are always preserved.</p>
+            <div id="cookie-oobe-notice" class="notice-amber">
+              Cookie Manager is <strong>OFF</strong> by default so your existing logins are never deleted before setup. Add the sites you want to keep below, then save your whitelist or enable auto-cleanup to activate it.
+            </div>
+            <label class="inline-label">
+              <input type="checkbox" id="cookie-delete-tab-close" />
+              Delete unwhitelisted cookies &amp; site data when closing a tab
+            </label>
+            <label class="inline-label">
+              <input type="checkbox" id="cookie-delete-chrome-close" />
+              Delete unwhitelisted cookies &amp; site data when closing Chrome / on startup
+            </label>
+            <div class="row-actions" style="margin-top: 12px;">
+              <button class="btn btn-danger" id="cookie-clean-now-btn" type="button" disabled>Clean Unwhitelisted Now</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Whitelisted Domains (<span id="cookie-whitelist-count">0</span>)</h2>
+            <p class="muted">One domain per line (normalized to <code>*.example.com</code> and deduplicated on save). Cookies and site data for these domains are never auto-deleted.</p>
+            <textarea id="cookie-whitelist-textarea" style="min-height: 220px;" placeholder="*.github.com&#10;*.google.com"></textarea>
+            <div class="row-actions">
+              <button class="btn" id="save-cookie-whitelist-btn" type="button">Save Whitelist</button>
+            </div>
+            <p class="muted" style="margin-top: 10px; margin-bottom: 0;">Cookie Manager settings and whitelist are included automatically in <strong>General → Backup &amp; Restore</strong> (which also accepts legacy Cookie Manager backup files).</p>
           </div>
         </div>
       </div>

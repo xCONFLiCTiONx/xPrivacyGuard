@@ -10,7 +10,9 @@
     "declarativeNetRequest",
     "alarms",
     "webRequest",
-    "tabs"
+    "tabs",
+    "cookies",
+    "browsingData"
   ],
   "optional_permissions": [
     "declarativeNetRequestFeedback"

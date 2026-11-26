@@ -14,6 +14,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const siteMuteBtn = document.getElementById("site-mute-btn");
   const muteIconEl = document.getElementById("mute-icon");
   const muteLabelEl = document.getElementById("mute-label");
+  const cookieStatusBadgeEl = document.getElementById("cookie-status-badge");
+  const cookieWhitelistBtn = document.getElementById("cookie-whitelist-btn");
+  const cookieCleanBtn = document.getElementById("cookie-clean-btn");
+  const cookieHintEl = document.getElementById("cookie-hint");
 
   let activeTab = null;
   let activeDomain = "";
@@ -21,6 +25,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   let excludedDomains = [];
   let filterDisabledDomains = [];
   let mutedSites = [];
+  let cookieState = {
+    setup: false,
+    deleteOnTabClose: false,
+    deleteOnChromeClose: false,
+    whitelist: []
+  };
 
   const UNMUTED_ICON_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>';
   const MUTED_ICON_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>';
@@ -51,6 +61,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  function isCookieDomainWhitelisted(domain, whitelist) {
+    if (!domain || !Array.isArray(whitelist) || !whitelist.length) return false;
+    const target = domain.replace(/^\./, "").toLowerCase();
+    return whitelist.some((site) => {
+      const s = String(site || "").trim().replace(/^\./, "").toLowerCase();
+      if (!s) return false;
+      const base = s.startsWith("*.") ? s.slice(2) : s;
+      return target === base || target.endsWith("." + base);
+    });
+  }
+
   async function loadState() {
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tabs && tabs.length > 0) {
@@ -66,7 +87,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    const data = await chrome.storage.local.get(["mode", "excludedDomains", "filterDisabledDomains", "mutedSites"]);
+    const data = await chrome.storage.local.get([
+      "mode",
+      "excludedDomains",
+      "filterDisabledDomains",
+      "mutedSites",
+      "cookieManagerSetup",
+      "cookieDeleteOnTabClose",
+      "cookieDeleteOnChromeClose",
+      "cookieWhitelist"
+    ]);
     const mode = data.mode === "cautious" || data.mode === "extreme"
       ? "cautious"
       : "daily";
@@ -77,6 +107,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     excludedDomains = data.excludedDomains || [];
     filterDisabledDomains = data.filterDisabledDomains || [];
     mutedSites = data.mutedSites || [];
+    cookieState = {
+      setup: data.cookieManagerSetup === true,
+      deleteOnTabClose: data.cookieDeleteOnTabClose === true,
+      deleteOnChromeClose: data.cookieDeleteOnChromeClose === true,
+      whitelist: Array.isArray(data.cookieWhitelist) ? data.cookieWhitelist : []
+    };
     updateUI();
 
     if (isWebPage) {
@@ -162,6 +198,52 @@ document.addEventListener("DOMContentLoaded", async () => {
       toggleFilterBtn.disabled = false;
       toggleFilterBtn.textContent = filterDisabled ? "Enable" : "Disable";
       toggleFilterBtn.className = filterDisabled ? "btn-primary btn-inline" : "btn-amber-soft btn-inline";
+    }
+
+    if (cookieStatusBadgeEl && cookieWhitelistBtn && cookieCleanBtn && cookieHintEl) {
+      const whitelisted = isWebPage && activeDomain && isCookieDomainWhitelisted(activeDomain, cookieState.whitelist);
+      if (!cookieState.setup) {
+        cookieStatusBadgeEl.textContent = "Off (Setup)";
+        cookieStatusBadgeEl.className = "badge badge-disabled";
+        cookieCleanBtn.disabled = true;
+        cookieCleanBtn.title = "Configure Cookie Manager in Settings first so cookies aren't deleted unexpectedly";
+        cookieHintEl.innerHTML = 'Off by default · <a href="#" id="open-cookies-setup-link">Set up in Settings</a>';
+        const setupLink = document.getElementById("open-cookies-setup-link");
+        if (setupLink) {
+          setupLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            chrome.tabs.create({ url: chrome.runtime.getURL("settings.html#cookies") });
+          });
+        }
+      } else {
+        const autoParts = [];
+        if (cookieState.deleteOnTabClose) autoParts.push("tab close");
+        if (cookieState.deleteOnChromeClose) autoParts.push("browser close");
+        cookieStatusBadgeEl.textContent = whitelisted ? "Whitelisted" : (autoParts.length ? "Auto-Clean" : "Manual");
+        cookieStatusBadgeEl.className = whitelisted
+          ? "badge badge-protected"
+          : (autoParts.length ? "badge badge-excluded" : "badge badge-disabled");
+        cookieCleanBtn.disabled = false;
+        cookieCleanBtn.title = "Delete all unwhitelisted closed-tab cookies & site data";
+        cookieHintEl.textContent = autoParts.length
+          ? `Auto-clean on ${autoParts.join(" & ")} · ${cookieState.whitelist.length} whitelisted.`
+          : `Manual mode · ${cookieState.whitelist.length} whitelisted.`;
+      }
+
+      if (!isWebPage || !activeDomain) {
+        cookieWhitelistBtn.disabled = true;
+        cookieWhitelistBtn.textContent = "Unavailable";
+        cookieWhitelistBtn.className = "btn-secondary btn-flex";
+      } else if (whitelisted) {
+        cookieWhitelistBtn.disabled = true;
+        cookieWhitelistBtn.textContent = "Whitelisted";
+        cookieWhitelistBtn.className = "btn-secondary btn-flex";
+      } else {
+        cookieWhitelistBtn.disabled = false;
+        cookieWhitelistBtn.textContent = "Keep Cookies";
+        cookieWhitelistBtn.title = `Whitelist ${activeDomain} and its cookie domains`;
+        cookieWhitelistBtn.className = "btn-green-soft btn-flex";
+      }
     }
 
     excludedCountEl.textContent = excludedDomains.length;
@@ -321,6 +403,61 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (siteMuteBtn) siteMuteBtn.addEventListener("click", toggleSiteMute);
 
+  if (cookieWhitelistBtn) {
+    cookieWhitelistBtn.addEventListener("click", async () => {
+      if (!isWebPage || !activeDomain || !activeTab || !activeTab.url) return;
+      try {
+        cookieWhitelistBtn.disabled = true;
+        const baseDomain = activeDomain.replace(/^www\./, "");
+        const domains = new Set([baseDomain]);
+        if (chrome.cookies && chrome.cookies.getAll) {
+          const cookies = await chrome.cookies.getAll({ url: activeTab.url });
+          for (const c of cookies || []) {
+            if (c && c.domain) domains.add(c.domain.replace(/^\./, ""));
+          }
+        }
+        const res = await chrome.runtime.sendMessage({
+          action: "addCookieWhitelistDomains",
+          domains: Array.from(domains)
+        });
+        if (!res || !res.success) {
+          throw new Error((res && res.error) || "Could not whitelist site cookies.");
+        }
+        cookieState.whitelist = res.whitelist || cookieState.whitelist;
+        cookieWhitelistBtn.textContent = "Added All!";
+        setTimeout(() => updateUI(), 700);
+      } catch (err) {
+        console.error("xPrivacyGuard: Could not whitelist cookies:", err);
+        alert(`Could not whitelist cookies: ${err.message}`);
+        updateUI();
+      }
+    });
+  }
+
+  if (cookieCleanBtn) {
+    cookieCleanBtn.addEventListener("click", async () => {
+      if (!cookieState.setup) return;
+      try {
+        cookieCleanBtn.disabled = true;
+        cookieCleanBtn.textContent = "Cleaning…";
+        const res = await chrome.runtime.sendMessage({ action: "triggerCookieCleanup" });
+        if (!res || !res.success) {
+          throw new Error((res && res.error) || "Cookie cleanup failed.");
+        }
+        cookieCleanBtn.textContent = "Done!";
+        setTimeout(() => {
+          cookieCleanBtn.textContent = "Clean All";
+          updateUI();
+        }, 900);
+      } catch (err) {
+        console.error("xPrivacyGuard: Cookie cleanup failed:", err);
+        alert(`Cookie cleanup failed: ${err.message}`);
+        cookieCleanBtn.textContent = "Clean All";
+        updateUI();
+      }
+    });
+  }
+
   toggleBtn.addEventListener("click", toggleActiveDomainExclusion);
   toggleFilterBtn.addEventListener("click", toggleFilterSite);
   addDomainBtn.addEventListener("click", addDomainFromInput);
@@ -352,10 +489,29 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (chrome.storage && chrome.storage.onChanged) {
     chrome.storage.onChanged.addListener((changes, namespace) => {
-      if (namespace === "local" && changes.mutedSites) {
+      if (namespace !== "local") return;
+      let dirty = false;
+      if (changes.mutedSites) {
         mutedSites = changes.mutedSites.newValue || [];
-        updateUI();
+        dirty = true;
       }
+      if (changes.cookieManagerSetup !== undefined) {
+        cookieState.setup = changes.cookieManagerSetup.newValue === true;
+        dirty = true;
+      }
+      if (changes.cookieDeleteOnTabClose !== undefined) {
+        cookieState.deleteOnTabClose = changes.cookieDeleteOnTabClose.newValue === true;
+        dirty = true;
+      }
+      if (changes.cookieDeleteOnChromeClose !== undefined) {
+        cookieState.deleteOnChromeClose = changes.cookieDeleteOnChromeClose.newValue === true;
+        dirty = true;
+      }
+      if (changes.cookieWhitelist) {
+        cookieState.whitelist = Array.isArray(changes.cookieWhitelist.newValue) ? changes.cookieWhitelist.newValue : [];
+        dirty = true;
+      }
+      if (dirty) updateUI();
     });
   }
 

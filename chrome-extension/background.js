@@ -6,7 +6,8 @@ if (typeof importScripts === "function") {
     "filters/procedural.js",
     "filters/storage.js",
     "filters/lists.js",
-    "filters/engine.js"
+    "filters/engine.js",
+    "cookies/manager.js"
   );
 }
 
@@ -404,6 +405,9 @@ if (chrome.tabs && chrome.tabs.onUpdated) {
     if (changeInfo.status === "loading") {
       resetTabBlockCount(tabId);
     }
+    if (changeInfo.status === "complete" && tab && tab.url && typeof CookieManager !== "undefined") {
+      CookieManager.trackOrigin(tab.url);
+    }
     const urlToCheck = changeInfo.url || (tab && tab.url);
     if (urlToCheck) {
       applyTabMute(tabId, urlToCheck);
@@ -416,6 +420,17 @@ if (chrome.tabs && chrome.tabs.onRemoved) {
     tabBlockCounts.delete(tabId);
     seenBlockRequests.delete(tabId);
     persistSessionCounts().catch(() => {});
+    if (typeof CookieManager !== "undefined") {
+      CookieManager.scheduleCleanup("tab");
+    }
+  });
+}
+
+if (chrome.windows && chrome.windows.onRemoved) {
+  chrome.windows.onRemoved.addListener(() => {
+    if (typeof CookieManager !== "undefined") {
+      CookieManager.scheduleCleanup("browser");
+    }
   });
 }
 
@@ -542,6 +557,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message && [
+    "getCookieManagerState",
+    "addCookieWhitelistDomains",
+    "saveCookieManagerSettings",
+    "triggerCookieCleanup"
+  ].includes(message.action) && typeof CookieManager !== "undefined") {
+    CookieManager.handleMessage(message, sender).then(
+      (response) => sendResponse(response || { success: false, error: "Unknown cookie manager action." }),
+      (err) => {
+        console.error("xPrivacyGuard: Cookie manager operation failed:", err);
+        sendResponse({
+          success: false,
+          error: err instanceof Error ? err.message : String(err)
+        });
+      }
+    );
+    return true;
+  }
+
+  if (message && [
     "getPageFilters",
     "recordFilterEvent",
     "getFilterData",
@@ -571,13 +605,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener((details) => {
   initBadgeAppearance();
   applyAllMutedSites().catch(() => {});
   syncContentScripts().catch((err) => {
     console.error("xPrivacyGuard: Error syncing content scripts:", err);
   });
   initGpc();
+  if (typeof CookieManager !== "undefined") {
+    CookieManager.ensureOobeDefaults()
+      .then(() => {
+        if (details && details.reason !== "install") {
+          return CookieManager.scheduleCleanup("browser");
+        }
+      })
+      .catch((err) => console.error("xPrivacyGuard: Could not initialize Cookie Manager:", err));
+  }
   FilterEngine.ensureDefaults()
     .then(() => FilterEngine.rebuildDynamicRules())
     .then(() => FilterEngine.refreshDueLists())
@@ -591,6 +634,11 @@ chrome.runtime.onStartup.addListener(() => {
     console.error("xPrivacyGuard: Error syncing content scripts:", err);
   });
   initGpc();
+  if (typeof CookieManager !== "undefined") {
+    CookieManager.ensureOobeDefaults()
+      .then(() => CookieManager.scheduleCleanup("browser"))
+      .catch((err) => console.error("xPrivacyGuard: Could not run Cookie Manager startup check:", err));
+  }
   FilterEngine.ensureDefaults()
     .then(() => FilterEngine.rebuildDynamicRules())
     .then(() => FilterEngine.refreshDueLists())

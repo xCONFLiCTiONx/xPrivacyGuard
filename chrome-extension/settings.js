@@ -31,6 +31,19 @@ if (typeof document !== "undefined") {
   const copySettingsBtn = document.getElementById("copy-settings-btn");
   const importSettingsBtn = document.getElementById("import-settings-btn");
   const importSettingsFileInput = document.getElementById("import-settings-file");
+  const cookieOobeNoticeEl = document.getElementById("cookie-oobe-notice");
+  const cookieDeleteTabCheck = document.getElementById("cookie-delete-tab-close");
+  const cookieDeleteChromeCheck = document.getElementById("cookie-delete-chrome-close");
+  const cookieCleanNowBtn = document.getElementById("cookie-clean-now-btn");
+  const cookieWhitelistTextarea = document.getElementById("cookie-whitelist-textarea");
+  const cookieWhitelistCountEl = document.getElementById("cookie-whitelist-count");
+  const saveCookieWhitelistBtn = document.getElementById("save-cookie-whitelist-btn");
+  let cookieManagerState = {
+    setup: false,
+    deleteOnTabClose: false,
+    deleteOnChromeClose: false,
+    whitelist: []
+  };
 
   function cleanDomain(input) {
     if (!input) return "";
@@ -413,8 +426,64 @@ if (typeof document !== "undefined") {
     });
   }
 
+  function renderCookieManager() {
+    if (cookieOobeNoticeEl) {
+      cookieOobeNoticeEl.style.display = cookieManagerState.setup ? "none" : "block";
+    }
+    if (cookieDeleteTabCheck) cookieDeleteTabCheck.checked = cookieManagerState.deleteOnTabClose === true;
+    if (cookieDeleteChromeCheck) cookieDeleteChromeCheck.checked = cookieManagerState.deleteOnChromeClose === true;
+    if (cookieCleanNowBtn) cookieCleanNowBtn.disabled = !cookieManagerState.setup;
+    if (cookieWhitelistTextarea && document.activeElement !== cookieWhitelistTextarea) {
+      cookieWhitelistTextarea.value = (cookieManagerState.whitelist || []).join("\n");
+    }
+    if (cookieWhitelistCountEl) {
+      cookieWhitelistCountEl.textContent = String((cookieManagerState.whitelist || []).length);
+    }
+  }
+
+  async function saveCookieManagerFromUI(includeWhitelist = false) {
+    try {
+      const payload = {
+        action: "saveCookieManagerSettings",
+        setup: true,
+        deleteOnTabClose: cookieDeleteTabCheck ? cookieDeleteTabCheck.checked : false,
+        deleteOnChromeClose: cookieDeleteChromeCheck ? cookieDeleteChromeCheck.checked : false
+      };
+      if (includeWhitelist && cookieWhitelistTextarea) {
+        payload.whitelist = cookieWhitelistTextarea.value.split(/\r?\n/);
+      }
+      const res = await chrome.runtime.sendMessage(payload);
+      if (!res || !res.success) {
+        throw new Error((res && res.error) || "Could not save Cookie Manager settings.");
+      }
+      cookieManagerState = {
+        setup: res.setup === true,
+        deleteOnTabClose: res.deleteOnTabClose === true,
+        deleteOnChromeClose: res.deleteOnChromeClose === true,
+        whitelist: Array.isArray(res.whitelist) ? res.whitelist : []
+      };
+      if (cookieWhitelistTextarea) {
+        cookieWhitelistTextarea.value = cookieManagerState.whitelist.join("\n");
+      }
+      renderCookieManager();
+      showSavedBanner(includeWhitelist ? "Cookie whitelist saved!" : "Cookie Manager settings saved!");
+    } catch (err) {
+      console.error("xPrivacyGuard: Could not save Cookie Manager settings:", err);
+      showError(err);
+    }
+  }
+
   async function loadSettings() {
-    const data = await chrome.storage.local.get(["mode", "enableGPC", "excludedDomains", "mutedSites"]);
+    const data = await chrome.storage.local.get([
+      "mode",
+      "enableGPC",
+      "excludedDomains",
+      "mutedSites",
+      "cookieManagerSetup",
+      "cookieDeleteOnTabClose",
+      "cookieDeleteOnChromeClose",
+      "cookieWhitelist"
+    ]);
     const mode = data.mode === "cautious" || data.mode === "extreme"
       ? "cautious"
       : "daily";
@@ -427,6 +496,13 @@ if (typeof document !== "undefined") {
     renderDomains();
     mutedSites = data.mutedSites || [];
     renderMutedSites();
+    cookieManagerState = {
+      setup: data.cookieManagerSetup === true,
+      deleteOnTabClose: data.cookieDeleteOnTabClose === true,
+      deleteOnChromeClose: data.cookieDeleteOnChromeClose === true,
+      whitelist: Array.isArray(data.cookieWhitelist) ? data.cookieWhitelist : []
+    };
+    renderCookieManager();
     await loadFilterData();
   }
 
@@ -621,6 +697,18 @@ if (typeof document !== "undefined") {
         mutedSites = changes.mutedSites.newValue;
         renderMutedSites();
       }
+      if (namespace === "local" && (
+        changes.cookieManagerSetup !== undefined
+        || changes.cookieDeleteOnTabClose !== undefined
+        || changes.cookieDeleteOnChromeClose !== undefined
+        || changes.cookieWhitelist !== undefined
+      )) {
+        if (changes.cookieManagerSetup !== undefined) cookieManagerState.setup = changes.cookieManagerSetup.newValue === true;
+        if (changes.cookieDeleteOnTabClose !== undefined) cookieManagerState.deleteOnTabClose = changes.cookieDeleteOnTabClose.newValue === true;
+        if (changes.cookieDeleteOnChromeClose !== undefined) cookieManagerState.deleteOnChromeClose = changes.cookieDeleteOnChromeClose.newValue === true;
+        if (changes.cookieWhitelist !== undefined) cookieManagerState.whitelist = Array.isArray(changes.cookieWhitelist.newValue) ? changes.cookieWhitelist.newValue : [];
+        renderCookieManager();
+      }
       if (namespace === "local" && (changes.filterDebugLog || changes.filterStats)) {
         if (isLiveLogEnabled) {
           if (changes.filterDebugLog && Array.isArray(changes.filterDebugLog.newValue)) {
@@ -689,7 +777,11 @@ if (typeof document !== "undefined") {
         "customFilterRules",
         "filterUpdateHours",
         "disableFilterStats",
-        "filterDebug"
+        "filterDebug",
+        "cookieManagerSetup",
+        "cookieDeleteOnTabClose",
+        "cookieDeleteOnChromeClose",
+        "cookieWhitelist"
       ]);
       const payload = buildSettingsExportPayload(data, {
         mode: modeSelect ? modeSelect.value : "daily",
@@ -698,14 +790,14 @@ if (typeof document !== "undefined") {
         mutedSites,
         filterLists,
         customFilterRules: customRules,
-        filterUpdateHours: document.getElementById("filter-update-hours")?.value
+        filterUpdateHours: document.getElementById("filter-update-hours")?.value,
+        cookieManager: cookieManagerState
       });
       const jsonStr = JSON.stringify(payload, null, 2);
       const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const ts = new Date().toISOString().replace(/[:.]/g, "-");
       a.download = `xprivacyguard-settings.json`;
       document.body.appendChild(a);
       a.click();
@@ -730,7 +822,11 @@ if (typeof document !== "undefined") {
         "customFilterRules",
         "filterUpdateHours",
         "disableFilterStats",
-        "filterDebug"
+        "filterDebug",
+        "cookieManagerSetup",
+        "cookieDeleteOnTabClose",
+        "cookieDeleteOnChromeClose",
+        "cookieWhitelist"
       ]);
       const payload = buildSettingsExportPayload(data, {
         mode: modeSelect ? modeSelect.value : "daily",
@@ -739,7 +835,8 @@ if (typeof document !== "undefined") {
         mutedSites,
         filterLists,
         customFilterRules: customRules,
-        filterUpdateHours: document.getElementById("filter-update-hours")?.value
+        filterUpdateHours: document.getElementById("filter-update-hours")?.value,
+        cookieManager: cookieManagerState
       });
       const jsonStr = JSON.stringify(payload, null, 2);
       try {
@@ -767,14 +864,25 @@ if (typeof document !== "undefined") {
       try {
         parsed = JSON.parse(text);
       } catch (e) {
-        throw new Error("Invalid JSON file. Please select a valid settings export.");
+        // Support legacy Cookie Manager plain-text (.txt) newline-separated domain lists
+        const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+        if (lines.length > 0 && lines.every((l) => /^[a-z0-9.*:/_-]+$/i.test(l))) {
+          parsed = lines;
+        } else {
+          throw new Error("Invalid settings file. Please select a valid xPrivacyGuard or Cookie Manager backup.");
+        }
       }
       const toSet = parseAndValidateImportSettings(parsed);
       await chrome.storage.local.set(toSet);
       await loadSettings();
       await chrome.runtime.sendMessage({ action: "syncContentScripts" });
       await chrome.runtime.sendMessage({ action: "syncMutedSites" });
-      showSavedBanner("Settings imported successfully!");
+      const isCookieOnly = Object.keys(toSet).every((k) => k.startsWith("cookie"));
+      showSavedBanner(
+        isCookieOnly
+          ? `Imported ${toSet.cookieWhitelist ? toSet.cookieWhitelist.length : 0} Cookie Manager whitelist domains!`
+          : "Settings imported successfully!"
+      );
     } catch (err) {
       console.error("xPrivacyGuard: Could not import settings:", err);
       showError(err);
@@ -792,6 +900,28 @@ if (typeof document !== "undefined") {
     importSettingsFileInput.addEventListener("change", (e) => {
       const file = e.target.files && e.target.files[0];
       if (file) importSettings(file);
+    });
+  }
+  if (cookieDeleteTabCheck) cookieDeleteTabCheck.addEventListener("change", () => saveCookieManagerFromUI(false));
+  if (cookieDeleteChromeCheck) cookieDeleteChromeCheck.addEventListener("change", () => saveCookieManagerFromUI(false));
+  if (saveCookieWhitelistBtn) saveCookieWhitelistBtn.addEventListener("click", () => saveCookieManagerFromUI(true));
+  if (cookieCleanNowBtn) {
+    cookieCleanNowBtn.addEventListener("click", async () => {
+      if (!cookieManagerState.setup) return;
+      try {
+        cookieCleanNowBtn.disabled = true;
+        cookieCleanNowBtn.textContent = "Cleaning…";
+        const res = await chrome.runtime.sendMessage({ action: "triggerCookieCleanup" });
+        if (!res || !res.success) {
+          throw new Error((res && res.error) || "Cookie cleanup failed.");
+        }
+        showSavedBanner(`Cleaned ${res.removedCookies || 0} cookies across ${res.cleanedOrigins || 0} closed origins.`);
+      } catch (err) {
+        showError(err);
+      } finally {
+        cookieCleanNowBtn.textContent = "Clean Unwhitelisted Now";
+        cookieCleanNowBtn.disabled = !cookieManagerState.setup;
+      }
     });
   }
 
@@ -1177,7 +1307,38 @@ function cleanDomain(input) {
   return str;
 }
 
+function normalizeCookieWhitelistDomain(input) {
+  if (typeof input !== "string") return null;
+  let domain = input.trim().toLowerCase();
+  if (!domain) return null;
+  domain = domain.replace(/^https?:\/\//, "");
+  domain = domain.replace(/^\*\./, "");
+  domain = domain.replace(/^\./, "");
+  domain = domain.split("/")[0].split("?")[0].split("#")[0].split(":")[0];
+  domain = domain.replace(/^www\./, "");
+  domain = domain.replace(/\.$/, "");
+  if (!domain || !/^[a-z0-9.-]+$/.test(domain)) return null;
+  return "*." + domain;
+}
+
+function optimizeCookieWhitelist(list) {
+  if (!Array.isArray(list)) return [];
+  const unique = Array.from(new Set(list.map(normalizeCookieWhitelistDomain).filter(Boolean)));
+  unique.sort((a, b) => a.length - b.length);
+  const optimized = [];
+  for (const item of unique) {
+    const base = item.slice(2);
+    const redundant = optimized.some((existing) => {
+      const eb = existing.slice(2);
+      return base === eb || base.endsWith("." + eb);
+    });
+    if (!redundant) optimized.push(item);
+  }
+  return optimized.sort();
+}
+
 function buildSettingsExportPayload(data, fallback = {}) {
+  const fbCookie = fallback.cookieManager || {};
   return {
     version: 1,
     exportedAt: new Date().toISOString(),
@@ -1191,7 +1352,13 @@ function buildSettingsExportPayload(data, fallback = {}) {
       customFilterRules: Array.isArray(data.customFilterRules) ? data.customFilterRules : (fallback.customFilterRules || []),
       filterUpdateHours: Number(data.filterUpdateHours) || Number(fallback.filterUpdateHours) || 24,
       disableFilterStats: data.disableFilterStats === true || fallback.disableFilterStats === true,
-      filterDebug: data.filterDebug === true || fallback.filterDebug === true
+      filterDebug: data.filterDebug === true || fallback.filterDebug === true,
+      cookieManager: {
+        setup: data.cookieManagerSetup !== undefined ? data.cookieManagerSetup === true : (fbCookie.setup === true),
+        deleteOnTabClose: data.cookieDeleteOnTabClose !== undefined ? data.cookieDeleteOnTabClose === true : (fbCookie.deleteOnTabClose === true),
+        deleteOnChromeClose: data.cookieDeleteOnChromeClose !== undefined ? data.cookieDeleteOnChromeClose === true : (fbCookie.deleteOnChromeClose === true),
+        whitelist: Array.isArray(data.cookieWhitelist) ? optimizeCookieWhitelist(data.cookieWhitelist) : optimizeCookieWhitelist(fbCookie.whitelist || [])
+      }
     }
   };
 }
@@ -1200,6 +1367,19 @@ function parseAndValidateImportSettings(parsed) {
   if (!parsed || typeof parsed !== "object") {
     throw new Error("Invalid settings file format.");
   }
+
+  // Legacy standalone Cookie-Manager export: JSON array of domain strings ["\*.example.com", ...]
+  if (Array.isArray(parsed)) {
+    const whitelist = optimizeCookieWhitelist(parsed);
+    if (!whitelist.length) {
+      throw new Error("No valid domains found in Cookie Manager backup.");
+    }
+    return {
+      cookieWhitelist: whitelist,
+      cookieManagerSetup: true
+    };
+  }
+
   const settings = (parsed.settings && typeof parsed.settings === "object") ? parsed.settings : parsed;
   const toSet = {};
   if (settings.mode === "daily" || settings.mode === "cautious" || settings.mode === "extreme") {
@@ -1235,6 +1415,33 @@ function parseAndValidateImportSettings(parsed) {
   if (typeof settings.filterDebug === "boolean") {
     toSet.filterDebug = settings.filterDebug;
   }
+
+  // Unified Cookie Manager section
+  if (settings.cookieManager && typeof settings.cookieManager === "object") {
+    const cm = settings.cookieManager;
+    if (typeof cm.setup === "boolean") toSet.cookieManagerSetup = cm.setup;
+    if (typeof cm.deleteOnTabClose === "boolean") toSet.cookieDeleteOnTabClose = cm.deleteOnTabClose;
+    if (typeof cm.deleteOnChromeClose === "boolean") toSet.cookieDeleteOnChromeClose = cm.deleteOnChromeClose;
+    if (Array.isArray(cm.whitelist)) {
+      toSet.cookieWhitelist = optimizeCookieWhitelist(cm.whitelist);
+    }
+  } else {
+    // Legacy Cookie-Manager object format ({ HiddenElements: [...], whitelist: [...], deleteOnTabClose, deleteOnChromeClose, isSetup })
+    const legacyList = Array.isArray(settings.HiddenElements)
+      ? settings.HiddenElements
+      : (Array.isArray(settings.whitelist) ? settings.whitelist : null);
+    if (legacyList) {
+      toSet.cookieWhitelist = optimizeCookieWhitelist(legacyList);
+      toSet.cookieManagerSetup = settings.isSetup !== undefined ? settings.isSetup === true : true;
+    }
+    if (typeof settings.deleteOnTabClose === "boolean") {
+      toSet.cookieDeleteOnTabClose = settings.deleteOnTabClose;
+    }
+    if (typeof settings.deleteOnChromeClose === "boolean") {
+      toSet.cookieDeleteOnChromeClose = settings.deleteOnChromeClose;
+    }
+  }
+
   if (Object.keys(toSet).length === 0) {
     throw new Error("No recognizable settings found in the imported file.");
   }

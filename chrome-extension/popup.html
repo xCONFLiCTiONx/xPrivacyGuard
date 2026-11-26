@@ -230,6 +230,39 @@
         border-color: #3a3a44;
       }
 
+      .btn-danger-soft {
+        background: var(--red-bg);
+        color: var(--red-soft);
+        border: 1px solid var(--red-border);
+      }
+
+      .btn-danger-soft:hover:not(:disabled) {
+        background: #4c1d22;
+        color: #fecaca;
+      }
+
+      .btn-green-soft {
+        background: var(--green-bg);
+        color: var(--green);
+        border: 1px solid var(--green-border);
+      }
+
+      .btn-green-soft:hover:not(:disabled) {
+        background: #14532d;
+        color: #dcfce7;
+      }
+
+      .hint a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .hint a:hover {
+        color: var(--accent-bright);
+        text-decoration: underline;
+      }
+
       .btn-inline {
         height: 24px;
         padding: 2px 9px;
@@ -478,6 +511,18 @@
         <div class="filter-stat"><strong id="filter-list-count">0</strong><span>Lists</span></div>
       </div>
       <div class="hint" id="filter-status">Loading filter status…</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">Cookie Manager</span>
+        <span class="badge badge-disabled" id="cookie-status-badge">Off</span>
+      </div>
+      <div class="action-row">
+        <button id="cookie-whitelist-btn" class="btn-green-soft btn-flex" type="button" disabled>Keep Cookies</button>
+        <button id="cookie-clean-btn" class="btn-danger-soft" type="button" disabled>Clean All</button>
+      </div>
+      <div class="hint" id="cookie-hint">Loading cookie settings…</div>
     </div>
 
     <div class="card">
