@@ -1,6 +1,9 @@
 package com.xconflictionx.xprivacyguard.vpn.transport
 
+import android.content.Context
 import android.net.VpnService
+import android.os.Build
+import android.provider.Settings
 import com.xconflictionx.xprivacyguard.config.CloudflareOneConfig
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -83,10 +86,12 @@ class AetherMasqueTransport(
             // 3. Open or enroll the MASQUE device identity
             onStatusUpdate("Opening Cloudflare MASQUE identity...")
             val identityBasePath = File(identityDir, "aether.toml").absolutePath
+            val deviceName = resolveDeviceName(vpnService)
             val openPayload = JSONObject().apply {
                 put("path", identityBasePath)
                 put("transport", "masque")
                 put("model", "Android")
+                put("name", deviceName)
                 put("locale", "en_US")
                 val team = config.normalizedTeam
                 if (team.isNotEmpty()) {
@@ -379,6 +384,78 @@ class AetherMasqueTransport(
         // Unregister socket protector ONLY after tunnel and identity handles have stopped
         if (protectorRegistered.getAndSet(false)) {
             runCatching { AetherNative.unregisterSocketProtector() }
+        }
+    }
+
+    companion object {
+        private const val OS_FALLBACK_NAME = "Android"
+        private const val MAX_DEVICE_NAME_LENGTH = 64
+
+        /**
+         * Resolves a human-readable device name for Cloudflare Zero Trust registration:
+         * 1. User-configured Android device name (Settings.Global.DEVICE_NAME / OEM equivalents)
+         * 2. Hardware manufacturer + model (Build.MANUFACTURER / Build.MODEL / Build.DEVICE)
+         * 3. OS fallback ("Android") when device info is unavailable or unknown.
+         */
+        internal fun resolveDeviceName(context: Context?): String {
+            val userDeviceName = context?.let { ctx ->
+                runCatching {
+                    val cr = ctx.contentResolver
+                    Settings.Global.getString(cr, Settings.Global.DEVICE_NAME)
+                        ?.takeIf { isUsableDeviceValue(it) }
+                        ?: Settings.System.getString(cr, "device_name")
+                            ?.takeIf { isUsableDeviceValue(it) }
+                        ?: Settings.Secure.getString(cr, "bluetooth_name")
+                            ?.takeIf { isUsableDeviceValue(it) }
+                }.getOrNull()
+            }
+            return formatDeviceName(
+                userDeviceName = userDeviceName,
+                manufacturer = runCatching { Build.MANUFACTURER }.getOrNull(),
+                model = runCatching { Build.MODEL }.getOrNull(),
+                device = runCatching { Build.DEVICE }.getOrNull()
+            )
+        }
+
+        internal fun formatDeviceName(
+            userDeviceName: String?,
+            manufacturer: String?,
+            model: String?,
+            device: String? = null
+        ): String {
+            sanitizeDeviceName(userDeviceName)?.let { return it }
+
+            val cleanManufacturer = sanitizeDeviceName(manufacturer)
+            val cleanModel = sanitizeDeviceName(model)
+            val hardwareName = when {
+                cleanModel != null && cleanManufacturer != null -> {
+                    if (cleanModel.startsWith(cleanManufacturer, ignoreCase = true)) {
+                        cleanModel
+                    } else {
+                        "$cleanManufacturer $cleanModel"
+                    }
+                }
+                cleanModel != null -> cleanModel
+                cleanManufacturer != null -> cleanManufacturer
+                else -> sanitizeDeviceName(device)
+            }
+
+            return sanitizeDeviceName(hardwareName) ?: OS_FALLBACK_NAME
+        }
+
+        private fun isUsableDeviceValue(raw: String?): Boolean = sanitizeDeviceName(raw) != null
+
+        private fun sanitizeDeviceName(raw: String?): String? {
+            if (raw.isNullOrBlank()) return null
+            val cleaned = raw
+                .map { ch -> if (ch.isISOControl()) ' ' else ch }
+                .joinToString("")
+                .trim()
+                .replace(Regex("\\s+"), " ")
+            if (cleaned.isEmpty() || cleaned.equals("unknown", ignoreCase = true)) {
+                return null
+            }
+            return cleaned.take(MAX_DEVICE_NAME_LENGTH).trim()
         }
     }
 }

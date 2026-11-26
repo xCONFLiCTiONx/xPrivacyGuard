@@ -11,7 +11,8 @@ $ErrorActionPreference = "Stop"
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $nativeRoot = Join-Path $PSScriptRoot "_deps"
 $aetherRoot = Join-Path $nativeRoot "Aether"
-$patchFile = Join-Path $repoRoot "native\aether\patches\0001-windows-raw-ip-tunnel-ffi.patch"
+$patchDir = Join-Path $repoRoot "native\aether\patches"
+$patchFiles = @(Get-ChildItem -Path $patchDir -Filter "*.patch" | Where-Object { $_.Name -notlike "*.reference.patch" } | Sort-Object Name)
 $nativeBinDir = Join-Path $repoRoot "native\bin\$RuntimeIdentifier"
 $publishRoot = Join-Path $repoRoot "artifacts\$RuntimeIdentifier"
 $project = Join-Path $repoRoot "src\xPrivacyGuard\xPrivacyGuard.csproj"
@@ -58,9 +59,10 @@ if (-not $SkipNativeRebuild -or -not (Test-Path $aetherDll)) {
     & git -C $aetherRoot checkout --force --detach $AetherCommit
     if ($LASTEXITCODE -ne 0) { throw "Could not check out pinned Aether commit." }
 
-    if (Test-Path $patchFile) {
-        & git -C $aetherRoot apply --whitespace=nowarn $patchFile
-        if ($LASTEXITCODE -ne 0) { throw "Failed to apply Windows raw-IP FFI patch: $patchFile" }
+    foreach ($patch in $patchFiles) {
+        & git -C $aetherRoot apply --whitespace=nowarn $patch.FullName
+        if ($LASTEXITCODE -ne 0) { throw "Failed to apply Windows Aether patch: $($patch.FullName)" }
+        Write-Host "Applied Windows Aether patch: $($patch.Name)"
     }
 
     $cargoManifest = Join-Path $aetherRoot "aether\Cargo.toml"

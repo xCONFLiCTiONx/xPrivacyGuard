@@ -107,11 +107,13 @@ public sealed class AetherIdentity : IAsyncDisposable
                 teamObj["email"] = config.UserEmail.Trim();
         }
 
+        var deviceName = ResolveDeviceName();
         var payloadObj = new Dictionary<string, object?>
         {
             ["path"] = identityPath,
             ["transport"] = "masque",
             ["model"] = "Windows",
+            ["name"] = deviceName,
             ["locale"] = "en_US"
         };
         if (teamObj is not null) payloadObj["team"] = teamObj;
@@ -126,6 +128,41 @@ public sealed class AetherIdentity : IAsyncDisposable
 
         var summary = ParseSummary(result, team);
         return new AetherIdentity(handle, summary, path);
+    }
+
+    internal static string ResolveDeviceName()
+    {
+        string? machineName = null;
+        try { machineName = Environment.MachineName; } catch { /* Fall through to DNS hostname / OS fallback. */ }
+
+        string? hostName = null;
+        if (string.IsNullOrWhiteSpace(machineName))
+        {
+            try { hostName = System.Net.Dns.GetHostName(); } catch { /* Fall through to OS fallback. */ }
+        }
+
+        return FormatDeviceName(machineName, hostName);
+    }
+
+    internal static string FormatDeviceName(string? machineName, string? hostName = null)
+    {
+        var primary = SanitizeDeviceName(machineName);
+        if (primary is not null) return primary;
+
+        var secondary = SanitizeDeviceName(hostName);
+        if (secondary is not null) return secondary;
+
+        return "Windows";
+    }
+
+    private static string? SanitizeDeviceName(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+        var chars = raw.Select(ch => char.IsControl(ch) ? ' ' : ch).ToArray();
+        var collapsed = string.Join(' ', new string(chars).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        if (collapsed.Length == 0 || collapsed.Equals("unknown", StringComparison.OrdinalIgnoreCase))
+            return null;
+        return collapsed.Length > 64 ? collapsed[..64].Trim() : collapsed;
     }
 
     public async Task<bool> VerifyPeerAsync(string peer, bool enableEch, TimeSpan timeout, CancellationToken cancellationToken)

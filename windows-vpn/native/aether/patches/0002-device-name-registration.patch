@@ -1,0 +1,302 @@
+diff --git a/aether/src/account.rs b/aether/src/account.rs
+index c68d81c..f5c992b 100644
+--- a/aether/src/account.rs
++++ b/aether/src/account.rs
+@@ -44,7 +44,40 @@ struct TeamRegistration {
+     locale: String,
+ }
+ 
+-fn team_registration_body(public_key: String, model: &str, locale: &str) -> TeamRegistration {
++fn default_os_device_name() -> &'static str {
++    if cfg!(target_os = "android") {
++        "Android"
++    } else if cfg!(target_os = "windows") {
++        "Windows"
++    } else if cfg!(target_os = "macos") {
++        "macOS"
++    } else if cfg!(target_os = "linux") {
++        "Linux"
++    } else {
++        "Unknown"
++    }
++}
++
++fn resolve_device_name(name: Option<&str>, model: &str) -> String {
++    if let Some(raw) = name {
++        let trimmed = raw.trim();
++        if !trimmed.is_empty() {
++            return trimmed.to_string();
++        }
++    }
++    let model_trimmed = model.trim();
++    if !model_trimmed.is_empty() {
++        return model_trimmed.to_string();
++    }
++    default_os_device_name().to_string()
++}
++
++fn team_registration_body(
++    public_key: String,
++    model: &str,
++    locale: &str,
++    name: Option<&str>,
++) -> TeamRegistration {
+     let install_id = crate::zerotrust::generate_install_id();
+     let fcm_token = crate::zerotrust::generate_fcm_token(&install_id);
+ 
+@@ -52,7 +85,7 @@ fn team_registration_body(public_key: String, model: &str, locale: &str) -> Team
+         key: public_key,
+         tos: tos_timestamp(),
+         model: model.to_string(),
+-        name: install_id.clone(),
++        name: resolve_device_name(name, model),
+         serial_number: install_id.clone(),
+         locale: locale.to_string(),
+         install_id,
+@@ -73,6 +106,8 @@ struct DeviceUpdate {
+ pub struct AccountData {
+     pub id: String,
+     #[serde(default)]
++    pub name: String,
++    #[serde(default)]
+     pub token: String,
+     #[serde(default)]
+     pub config: Config,
+@@ -999,13 +1034,34 @@ fn extract_wg_peer(reg: &AccountData) -> Result<[u8; 32]> {
+     Ok(arr)
+ }
+ 
++pub async fn update_device_name(device_id: &str, token: &str, name: &str) -> Result<()> {
++    let trimmed = name.trim();
++    if trimmed.is_empty() {
++        return Ok(());
++    }
++    let path = format!("/{}/reg/{}", consts::API_VERSION, device_id);
++    let body = serde_json::to_vec(&serde_json::json!({ "name": trimmed }))
++        .map_err(|e| AetherError::Api(format!("encode: {e}")))?;
++    api_call(
++        "updating device name",
++        "PATCH",
++        &path,
++        Some(&body),
++        Some(token),
++        None,
++    )
++    .await?;
++    Ok(())
++}
++
+ pub async fn register_with_team(
+     model: &str,
+     locale: &str,
++    name: Option<&str>,
+     token: &str,
+ ) -> Result<(AccountData, [u8; 32])> {
+     let (wg_private, wg_public) = generate_x25519_keypair();
+-    let body = team_registration_body(wg_public, model, locale);
++    let body = team_registration_body(wg_public, model, locale, name);
+ 
+     let path = format!("/{}/reg", consts::API_VERSION);
+     let encoded =
+@@ -1026,10 +1082,11 @@ pub async fn register_with_team(
+ pub async fn provision_team(
+     model: &str,
+     locale: &str,
++    name: Option<&str>,
+     settings: &crate::zerotrust::TeamSettings,
+ ) -> Result<Identity> {
+     let token = crate::zerotrust::resolve_token(settings).await?;
+-    let (reg, wg_private) = register_with_team(model, locale, &token).await?;
++    let (reg, wg_private) = register_with_team(model, locale, name, &token).await?;
+     finish_provision(reg, wg_private)
+ }
+ 
+@@ -1059,6 +1116,10 @@ pub fn endpoint_from(reg: &AccountData) -> String {
+ }
+ 
+ pub async fn refresh_profile(identity: Identity) -> Identity {
++    refresh_profile_with_name(identity, None).await
++}
++
++pub async fn refresh_profile_with_name(identity: Identity, desired_name: Option<&str>) -> Identity {
+     let reg = match fetch_device(&identity.device_id, &identity.access_token).await {
+         Ok(reg) => reg,
+         Err(AetherError::IdentityRefused(reason)) => {
+@@ -1081,6 +1142,22 @@ pub async fn refresh_profile(identity: Identity) -> Identity {
+         }
+     };
+ 
++    if let Some(desired) = desired_name.map(str::trim).filter(|s| !s.is_empty()) {
++        if reg.name.trim() != desired {
++            match update_device_name(&identity.device_id, &identity.access_token, desired).await {
++                Ok(()) => log::info!(
++                    "[+] updated cloudflare device name for {} to '{}'",
++                    identity.device_id,
++                    desired
++                ),
++                Err(error) => log::warn!(
++                    "[!] could not update cloudflare device name for {}: {error}",
++                    identity.device_id
++                ),
++            }
++        }
++    }
++
+     let ipv4 = reg.config.interface.addresses.v4.trim().to_string();
+     let ipv6 = reg.config.interface.addresses.v6.trim().to_string();
+     let organization = reg.account.organization.trim().to_string();
+@@ -1202,6 +1279,13 @@ pub struct MasqueEnrollment {
+ }
+ 
+ pub async fn ensure_masque_enrolled(identity: &Identity) -> Result<MasqueEnrollment> {
++    ensure_masque_enrolled_with_name(identity, None).await
++}
++
++pub async fn ensure_masque_enrolled_with_name(
++    identity: &Identity,
++    name: Option<&str>,
++) -> Result<MasqueEnrollment> {
+     let usable = !identity.cert_pem.is_empty() && !identity.key_pem.is_empty();
+ 
+     if usable && !masque_cert_expiring(identity.cert_issued_at) {
+@@ -1220,11 +1304,12 @@ pub async fn ensure_masque_enrolled(identity: &Identity) -> Result<MasqueEnrollm
+     }
+ 
+     let keypair = generate_masque_keypair()?;
++    let trimmed_name = name.map(str::trim).filter(|s| !s.is_empty());
+     match enroll_key(
+         &identity.device_id,
+         &identity.access_token,
+         &keypair.spki_der,
+-        None,
++        trimmed_name,
+     )
+     .await
+     {
+diff --git a/aether/src/api.rs b/aether/src/api.rs
+index f1750c2..7a409f3 100644
+--- a/aether/src/api.rs
++++ b/aether/src/api.rs
+@@ -195,6 +195,7 @@ pub async fn team_forget_token() {
+ pub struct ProvisionRequest {
+     pub model: String,
+     pub locale: String,
++    pub name: Option<String>,
+     pub team: Option<TeamCredentials>,
+     pub masque_cert: bool,
+ }
+@@ -204,6 +205,7 @@ impl Default for ProvisionRequest {
+         Self {
+             model: consts::DEFAULT_MODEL.to_string(),
+             locale: consts::DEFAULT_LOCALE.to_string(),
++            name: None,
+             team: None,
+             masque_cert: false,
+         }
+@@ -286,15 +288,20 @@ pub async fn provision_identity(request: &ProvisionRequest) -> Result<Identity>
+                 settings.team,
+                 settings.team_domain()
+             );
+-            let identity =
+-                account::provision_team(&request.model, &request.locale, &settings).await?;
+-            account::refresh_profile(identity).await
++            let identity = account::provision_team(
++                &request.model,
++                &request.locale,
++                request.name.as_deref(),
++                &settings,
++            )
++            .await?;
++            account::refresh_profile_with_name(identity, request.name.as_deref()).await
+         }
+         None => account::provision_wg(&request.model, &request.locale, None).await?,
+     };
+ 
+     let identity = if request.masque_cert {
+-        attach_masque_cert(identity).await?
++        attach_masque_cert_with_name(identity, request.name.as_deref()).await?
+     } else {
+         identity
+     };
+@@ -307,12 +314,19 @@ pub async fn refresh_identity(identity: Identity) -> Identity {
+ }
+ 
+ pub async fn attach_masque_cert(identity: Identity) -> Result<Identity> {
++    attach_masque_cert_with_name(identity, None).await
++}
++
++async fn attach_masque_cert_with_name(
++    identity: Identity,
++    name: Option<&str>,
++) -> Result<Identity> {
+     if identity.has_masque_credentials() && !account::masque_cert_expiring(identity.cert_issued_at)
+     {
+         return Ok(identity);
+     }
+ 
+-    let enrollment = account::ensure_masque_enrolled(&identity).await?;
++    let enrollment = account::ensure_masque_enrolled_with_name(&identity, name).await?;
+     Ok(Identity {
+         cert_pem: enrollment.cert_pem,
+         key_pem: enrollment.key_pem,
+@@ -325,11 +339,11 @@ pub async fn open_identity(path: &str, request: &ProvisionRequest) -> Result<Ide
+     if let Some(identity) = load_identity(path)? {
+         log::info!("[+] loaded an existing identity from {path}");
+         let identity = match request.team.is_some() {
+-            true => refresh_identity(identity).await,
++            true => account::refresh_profile_with_name(identity, request.name.as_deref()).await,
+             false => identity,
+         };
+         let identity = match request.masque_cert {
+-            true => attach_masque_cert(identity).await?,
++            true => attach_masque_cert_with_name(identity, request.name.as_deref()).await?,
+             false => identity,
+         };
+         save_identity(path, &identity)?;
+diff --git a/aether/src/ffi.rs b/aether/src/ffi.rs
+index 6ee1085..ab3d3bd 100644
+--- a/aether/src/ffi.rs
++++ b/aether/src/ffi.rs
+@@ -226,6 +226,8 @@ struct OpenPayload {
+     #[serde(default)]
+     model: Option<String>,
+     #[serde(default)]
++    name: Option<String>,
++    #[serde(default)]
+     locale: Option<String>,
+     #[serde(default)]
+     team: Option<TeamPayload>,
+@@ -345,6 +347,12 @@ pub unsafe extern "C" fn aether_identity_open(payload: *const c_char) -> *mut c_
+         if let Some(model) = payload.model {
+             request.model = model;
+         }
++        if let Some(name) = payload.name {
++            let trimmed = name.trim();
++            if !trimmed.is_empty() {
++                request.name = Some(trimmed.to_string());
++            }
++        }
+         if let Some(locale) = payload.locale {
+             request.locale = locale;
+         }
+diff --git a/aether/src/provision.rs b/aether/src/provision.rs
+index 6009b79..8485083 100644
+--- a/aether/src/provision.rs
++++ b/aether/src/provision.rs
+@@ -140,9 +140,13 @@ async fn provision_account() -> Result<account::Identity> {
+                 settings.team,
+                 settings.team_domain()
+             );
+-            let identity =
+-                account::provision_team(consts::DEFAULT_MODEL, consts::DEFAULT_LOCALE, &settings)
+-                    .await?;
++            let identity = account::provision_team(
++                consts::DEFAULT_MODEL,
++                consts::DEFAULT_LOCALE,
++                None,
++                &settings,
++            )
++            .await?;
+             Ok(account::refresh_profile(identity).await)
+         }
+         None => account::provision_wg(consts::DEFAULT_MODEL, consts::DEFAULT_LOCALE, None).await,
