@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Drawing;
 using System.Windows;
+using xPrivacyGuard.Models;
 using xPrivacyGuard.Services;
 using Forms = System.Windows.Forms;
 using MessageBox = System.Windows.MessageBox;
@@ -11,7 +12,9 @@ public partial class App : System.Windows.Application
 {
     private Forms.NotifyIcon? _trayIcon;
     private MainWindow? _mainWindow;
-    private Icon? _appIcon;
+    private Icon? _iconConnected;
+    private Icon? _iconConnecting;
+    private Icon? _iconDisconnected;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -71,7 +74,9 @@ public partial class App : System.Windows.Application
 
     private void LoadTrayIcons()
     {
-        _appIcon = LoadResourceIcon("Assets/xprivacyguard.ico") ?? SystemIcons.Shield;
+        _iconConnecting = LoadResourceIcon("Assets/xprivacyguard.ico") ?? SystemIcons.Shield;
+        _iconConnected = LoadResourceIcon("Assets/xprivacyguard-connected.ico") ?? _iconConnecting;
+        _iconDisconnected = LoadResourceIcon("Assets/xprivacyguard-disconnected.ico") ?? _iconConnecting;
     }
 
     private static Icon? LoadResourceIcon(string relativeUri)
@@ -125,7 +130,7 @@ public partial class App : System.Windows.Application
 
         _trayIcon = new Forms.NotifyIcon
         {
-            Icon = _appIcon ?? SystemIcons.Shield,
+            Icon = _iconDisconnected ?? _iconConnecting ?? SystemIcons.Shield,
             Text = "xPrivacyGuard — Disconnected",
             ContextMenuStrip = menu,
             Visible = true
@@ -133,9 +138,15 @@ public partial class App : System.Windows.Application
         _trayIcon.DoubleClick += (_, _) => ShowMainWindow();
     }
 
-    private void UpdateTrayState(string status, bool isConnected)
+    private void UpdateTrayState(string status, TunnelStatus tunnelStatus)
     {
         if (_trayIcon is null) return;
+        _trayIcon.Icon = tunnelStatus switch
+        {
+            TunnelStatus.Connected => _iconConnected ?? _iconConnecting ?? SystemIcons.Shield,
+            TunnelStatus.Connecting or TunnelStatus.Reconnecting => _iconConnecting ?? SystemIcons.Shield,
+            _ => _iconDisconnected ?? _iconConnecting ?? SystemIcons.Shield
+        };
         var text = $"xPrivacyGuard — {status}";
         _trayIcon.Text = text.Length > 63 ? text[..63] : text;
     }
@@ -159,15 +170,25 @@ public partial class App : System.Windows.Application
         }
         _trayIcon?.Dispose();
         _trayIcon = null;
-        _appIcon?.Dispose();
+        DisposeTrayIcons();
         Shutdown();
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
         _trayIcon?.Dispose();
-        _appIcon?.Dispose();
+        DisposeTrayIcons();
         base.OnExit(e);
+    }
+
+    private void DisposeTrayIcons()
+    {
+        if (!ReferenceEquals(_iconConnected, _iconConnecting)) _iconConnected?.Dispose();
+        if (!ReferenceEquals(_iconDisconnected, _iconConnecting)) _iconDisconnected?.Dispose();
+        _iconConnecting?.Dispose();
+        _iconConnected = null;
+        _iconDisconnected = null;
+        _iconConnecting = null;
     }
 
     private sealed class DarkTrayMenuRenderer : Forms.ToolStripProfessionalRenderer

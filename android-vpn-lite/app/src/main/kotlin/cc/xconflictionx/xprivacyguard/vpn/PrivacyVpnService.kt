@@ -1195,10 +1195,28 @@ class PrivacyVpnService : VpnService() {
             "Paused while another VPN is connected — will auto-reconnect"
         }
 
+        val accentColor = if (isRunning) 0xFF22C55E.toInt() else 0xFFF38020.toInt()
+        val largeIconRes = if (isRunning) {
+            cc.xconflictionx.xprivacyguard.R.drawable.ic_shield_connected
+        } else {
+            cc.xconflictionx.xprivacyguard.R.drawable.ic_shield
+        }
+        val largeBitmap = runCatching {
+            val drawable = getDrawable(largeIconRes) ?: return@runCatching null
+            val size = (48 * resources.displayMetrics.density).toInt().coerceAtLeast(64)
+            val bmp = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
+            val canvas = android.graphics.Canvas(bmp)
+            drawable.setBounds(0, 0, size, size)
+            drawable.draw(canvas)
+            bmp
+        }.getOrNull()
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(text)
-            .setSmallIcon(android.R.drawable.ic_lock_lock)
+            .setSmallIcon(cc.xconflictionx.xprivacyguard.R.drawable.ic_shield)
+            .setColor(accentColor)
+            .apply { if (largeBitmap != null) setLargeIcon(largeBitmap) }
             .setOngoing(true)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopPendingIntent)
             .setContentIntent(

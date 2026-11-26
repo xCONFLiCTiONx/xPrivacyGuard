@@ -1982,10 +1982,28 @@ class XPrivacyGuardService : VpnService() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
+        val status = VpnStateManager.state.value.status
+        val (accentColor, largeIconRes) = when (status) {
+            TunnelStatus.CONNECTED -> 0xFF22C55E.toInt() to R.drawable.ic_shield_connected
+            TunnelStatus.CONNECTING -> 0xFFF38020.toInt() to R.drawable.ic_shield
+            TunnelStatus.DISCONNECTED, TunnelStatus.ERROR -> 0xFFEF4444.toInt() to R.drawable.ic_shield_disconnected
+        }
+        val largeBitmap = runCatching {
+            val drawable = getDrawable(largeIconRes) ?: return@runCatching null
+            val size = (48 * resources.displayMetrics.density).toInt().coerceAtLeast(64)
+            val bmp = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
+            val canvas = android.graphics.Canvas(bmp)
+            drawable.setBounds(0, 0, size, size)
+            drawable.draw(canvas)
+            bmp
+        }.getOrNull()
+
         return Notification.Builder(this, CHANNEL_ID)
             .setContentTitle("xServer Zero Trust")
             .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_shield)
+            .setColor(accentColor)
+            .apply { if (largeBitmap != null) setLargeIcon(largeBitmap) }
             .setContentIntent(pendingOpen)
             .setOngoing(true)
             .addAction(

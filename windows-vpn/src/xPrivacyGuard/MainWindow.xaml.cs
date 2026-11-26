@@ -43,15 +43,21 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _telemetryTimer;
 
     public event Action? RequestExit;
-    public event Action<string, bool>? TrayStatusChanged;
+    public event Action<string, TunnelStatus>? TrayStatusChanged;
     public bool AllowClose { get; set; }
 
-    private static readonly BitmapImage AppBrandPng =
+    private static readonly BitmapImage AppBrandConnectingPng =
         new(new Uri("pack://application:,,,/Assets/xprivacyguard.png"));
+    private static readonly BitmapImage AppBrandConnectedPng =
+        new(new Uri("pack://application:,,,/Assets/xprivacyguard-connected.png"));
+    private static readonly BitmapImage AppBrandDisconnectedPng =
+        new(new Uri("pack://application:,,,/Assets/xprivacyguard-disconnected.png"));
 
     public MainWindow()
     {
         InitializeComponent();
+        Icon = AppBrandDisconnectedPng;
+        BrandIconImage.Source = AppBrandDisconnectedPng;
         _vpnEngine = new VpnEngineService(_settingsStore);
         _vpnEngine.StateChanged += OnVpnStateChanged;
         _vpnEngine.TrafficLogged += OnTrafficLogged;
@@ -267,11 +273,16 @@ public partial class MainWindow : Window
 
     private void ApplySnapshotToUi(VpnRuntimeSnapshot s)
     {
-        var isConnected = s.Status == TunnelStatus.Connected;
         HeaderStatusText.Text = s.Status.ToString();
-        TrayStatusChanged?.Invoke(s.StatusMessage, isConnected);
-        Icon = AppBrandPng;
-        BrandIconImage.Source = AppBrandPng;
+        TrayStatusChanged?.Invoke(s.StatusMessage, s.Status);
+        var stateIcon = s.Status switch
+        {
+            TunnelStatus.Connected => AppBrandConnectedPng,
+            TunnelStatus.Connecting or TunnelStatus.Reconnecting => AppBrandConnectingPng,
+            _ => AppBrandDisconnectedPng
+        };
+        Icon = stateIcon;
+        BrandIconImage.Source = stateIcon;
 
         var statusBrush = s.Status switch
         {

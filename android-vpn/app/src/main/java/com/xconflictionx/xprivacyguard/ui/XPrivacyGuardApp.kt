@@ -245,16 +245,26 @@ fun XPrivacyGuardApp(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp)
                         ) {
+                            val brandShieldRes = when (vpnState.status) {
+                                TunnelStatus.CONNECTED -> R.drawable.ic_shield_connected
+                                TunnelStatus.CONNECTING -> R.drawable.ic_shield
+                                TunnelStatus.ERROR, TunnelStatus.DISCONNECTED -> R.drawable.ic_shield_disconnected
+                            }
+                            val brandBorderColor = when (vpnState.status) {
+                                TunnelStatus.CONNECTED -> AgSuccess
+                                TunnelStatus.CONNECTING -> CfOrange
+                                TunnelStatus.ERROR, TunnelStatus.DISCONNECTED -> AgError
+                            }
                             Box(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
                                     .size(40.dp)
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(AgSurface)
-                                    .border(1.dp, CfOrange.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                    .border(1.dp, brandBorderColor.copy(alpha = 0.55f), RoundedCornerShape(12.dp))
                             ) {
                                 Image(
-                                    painter = painterResource(id = R.drawable.ic_shield),
+                                    painter = painterResource(id = brandShieldRes),
                                     contentDescription = "xPrivacyGuard",
                                     modifier = Modifier.size(28.dp)
                                 )

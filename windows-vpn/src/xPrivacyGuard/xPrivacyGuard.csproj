@@ -16,6 +16,10 @@
   <ItemGroup>
     <Resource Include="Assets\xprivacyguard.ico" />
     <Resource Include="Assets\xprivacyguard.png" />
+    <Resource Include="Assets\xprivacyguard-connected.ico" />
+    <Resource Include="Assets\xprivacyguard-connected.png" />
+    <Resource Include="Assets\xprivacyguard-disconnected.ico" />
+    <Resource Include="Assets\xprivacyguard-disconnected.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\native\bin\win-x64\aether.dll" Condition="Exists('..\..\native\bin\win-x64\aether.dll')" CopyToOutputDirectory="PreserveNewest" Link="aether.dll" />
