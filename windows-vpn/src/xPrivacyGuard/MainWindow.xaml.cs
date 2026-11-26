@@ -217,17 +217,27 @@ public partial class MainWindow : Window
         if (!IsInitialized || sender is not System.Windows.Controls.RadioButton rb || rb.Tag is not string tag) return;
 
         DashboardView.Visibility = tag == "Dashboard" ? Visibility.Visible : Visibility.Collapsed;
+        StatsView.Visibility = tag == "Stats" ? Visibility.Visible : Visibility.Collapsed;
         CloudflareView.Visibility = tag == "Cloudflare" ? Visibility.Visible : Visibility.Collapsed;
         DnsView.Visibility = tag == "Dns" ? Visibility.Visible : Visibility.Collapsed;
         SecurityView.Visibility = tag == "Security" ? Visibility.Visible : Visibility.Collapsed;
 
+        // Keep Home screen clean & uncluttered like Android HomeScreen
+        TopHeaderArea.Visibility = tag == "Dashboard" ? Visibility.Collapsed : Visibility.Visible;
+
         (PageTitleText.Text, PageSubtitleText.Text) = tag switch
         {
+            "Stats" => ("Stats & Activity", "Live MASQUE telemetry, tunnel address, and split-tunnel bypass log"),
             "Cloudflare" => ("Cloudflare One", "Zero Trust team sign-in, device enrollment, and MASQUE transport"),
             "Dns" => ("Zero Trust DNS", "Cloudflare Gateway DNS Location and Split/Private LAN DNS"),
             "Security" => ("Settings & Split Tunnel", "Exclude streaming services & games, sync xSecurity posture, and preferences"),
-            _ => ("Dashboard", "Always-on Cloudflare One MASQUE tunnel with split-tunnel exclusions")
+            _ => ("Home", "Always-on Cloudflare One MASQUE tunnel")
         };
+    }
+
+    private void ProtocolPill_Click(object sender, RoutedEventArgs e)
+    {
+        NavCloudflare.IsChecked = true;
     }
 
     // --- Connection Lifecycle ---
@@ -273,7 +283,18 @@ public partial class MainWindow : Window
 
     private void ApplySnapshotToUi(VpnRuntimeSnapshot s)
     {
-        HeaderStatusText.Text = s.Status.ToString();
+        var isConnected = s.Status == TunnelStatus.Connected;
+        var isConnecting = s.Status is TunnelStatus.Connecting or TunnelStatus.Reconnecting;
+        var isError = s.Status == TunnelStatus.Error;
+
+        HeaderStatusText.Text = s.Status switch
+        {
+            TunnelStatus.Connected => "Connected",
+            TunnelStatus.Connecting => "Connecting…",
+            TunnelStatus.Reconnecting => "Reconnecting…",
+            TunnelStatus.Error => "Attention Needed",
+            _ => "Disconnected"
+        };
         TrayStatusChanged?.Invoke(s.StatusMessage, s.Status);
         var stateIcon = s.Status switch
         {
@@ -284,30 +305,65 @@ public partial class MainWindow : Window
         Icon = stateIcon;
         BrandIconImage.Source = stateIcon;
 
-        var statusBrush = s.Status switch
+        var accentColor = s.Status switch
         {
-            TunnelStatus.Connected => new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x22, 0xC5, 0x5E)),
-            TunnelStatus.Connecting or TunnelStatus.Reconnecting => new SolidColorBrush(System.Windows.Media.Color.FromRgb(0xFA, 0xAD, 0x3F)),
-            TunnelStatus.Error => new SolidColorBrush(System.Windows.Media.Color.FromRgb(0xEF, 0x44, 0x44)),
-            _ => new SolidColorBrush(System.Windows.Media.Color.FromRgb(0xEF, 0x44, 0x44))
+            TunnelStatus.Connected => System.Windows.Media.Color.FromRgb(0x22, 0xC5, 0x5E),
+            TunnelStatus.Connecting or TunnelStatus.Reconnecting => System.Windows.Media.Color.FromRgb(0xFA, 0xAD, 0x3F),
+            _ => System.Windows.Media.Color.FromRgb(0xEF, 0x44, 0x44)
         };
+        var statusBrush = new SolidColorBrush(accentColor);
+        var cfOrangeBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0xF3, 0x80, 0x20));
+        var textPrimaryBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0xF4, 0xF4, 0xF5));
+        var textMutedBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0xA1, 0xA1, 0xAA));
+        var subtleBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x71, 0x71, 0x7A));
+        var borderColor = System.Windows.Media.Color.FromRgb(0x2C, 0x2C, 0x33);
+
         StatusDot.Fill = statusBrush;
-        HeaderStatusText.Foreground = statusBrush;
-        DashStateHeadline.Foreground = statusBrush;
+        BrandIconBorder.BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(0x8C, accentColor.R, accentColor.G, accentColor.B));
+
+        // Update Futuristic Centerpiece Power Orb (exact match to Android HomeScreen)
+        OrbCoreBorder.Stroke = statusBrush;
+        OrbPowerIcon.Fill = statusBrush;
+        OrbGlowStop0.Color = System.Windows.Media.Color.FromArgb(isConnected || isConnecting ? (byte)0x5C : (byte)0x38, accentColor.R, accentColor.G, accentColor.B);
+        OrbGlowStop1.Color = System.Windows.Media.Color.FromArgb(isConnected || isConnecting ? (byte)0x1F : (byte)0x0E, accentColor.R, accentColor.G, accentColor.B);
+        OrbGlowEllipse.Opacity = isConnected || isConnecting ? 0.95 : 0.55;
+        OrbOuterRing.Stroke = new SolidColorBrush(isConnected || isConnecting
+            ? System.Windows.Media.Color.FromArgb(0x38, accentColor.R, accentColor.G, accentColor.B)
+            : System.Windows.Media.Color.FromArgb(0xB3, borderColor.R, borderColor.G, borderColor.B));
+        OrbMidRing.Stroke = new SolidColorBrush(isConnected || isConnecting
+            ? System.Windows.Media.Color.FromArgb(0x73, accentColor.R, accentColor.G, accentColor.B)
+            : borderColor);
+        OrbCoreCenterStop.Color = isConnected
+            ? System.Windows.Media.Color.FromRgb(0x14, 0x29, 0x1D)
+            : (isConnecting
+                ? System.Windows.Media.Color.FromRgb(0x28, 0x1B, 0x11)
+                : System.Windows.Media.Color.FromRgb(0x22, 0x22, 0x27));
 
         DashStateHeadline.Text = s.Status switch
         {
-            TunnelStatus.Connected => "Protected by Cloudflare One",
-            TunnelStatus.Connecting => "Connecting to MASQUE...",
-            TunnelStatus.Reconnecting => "Reconnecting (Fail-Closed)...",
-            TunnelStatus.Error => "Tunnel Error",
-            _ => "Tunnel Disconnected"
+            TunnelStatus.Connected => "C O N N E C T E D",
+            TunnelStatus.Connecting => "C O N N E C T I N G",
+            TunnelStatus.Reconnecting => "R E C O N N E C T I N G",
+            _ => "D I S C O N N E C T E D"
         };
-        DashStateDetail.Text = s.StatusMessage;
+        DashStateHeadline.Foreground = isConnected ? statusBrush : (isConnecting ? statusBrush : textPrimaryBrush);
 
-        ConnectToggleButton.Content = s.Status is TunnelStatus.Connected or TunnelStatus.Connecting or TunnelStatus.Reconnecting
-            ? "Disconnect"
-            : "Connect";
+        var carrierText = s.Carrier is not null
+            ? $"Cloudflare MASQUE ({s.Carrier})"
+            : (_settings.CloudflareOne.PreferHttp2 ? "Cloudflare MASQUE (H2)" : "Cloudflare MASQUE (H3)");
+        DashStateDetail.Text = s.Status switch
+        {
+            TunnelStatus.Connected => $"{carrierText} • Encrypted",
+            TunnelStatus.Connecting => string.IsNullOrWhiteSpace(s.StatusMessage) ? "Establishing tunnel…" : s.StatusMessage,
+            TunnelStatus.Reconnecting => string.IsNullOrWhiteSpace(s.StatusMessage) ? "Reconnecting (Fail-Closed)…" : s.StatusMessage,
+            TunnelStatus.Error => string.IsNullOrWhiteSpace(s.StatusMessage) ? "Connection error" : s.StatusMessage,
+            _ => "Click to secure your connection"
+        };
+        DashStateDetail.Foreground = isError ? statusBrush : textMutedBrush;
+
+        ProtocolDot.Fill = isConnected ? cfOrangeBrush : subtleBrush;
+        ProtocolLabelText.Text = carrierText;
+        AlwaysOnBadgeText.Visibility = _settings.AlwaysOnVpn ? Visibility.Visible : Visibility.Collapsed;
 
         MetricPeerText.Text = s.ActivePeer ?? _settings.CloudflareOne.DisplayEndpoint;
         MetricCarrierText.Text = s.Carrier is not null ? $"MASQUE {s.Carrier}" : (_settings.CloudflareOne.PreferHttp2 ? "MASQUE H2" : "MASQUE H3");

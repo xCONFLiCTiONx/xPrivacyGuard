@@ -1,174 +1,285 @@
 <Window x:Class="xPrivacyGuard.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="xPrivacyGuard" Width="960" Height="640"
-        MinWidth="820" MinHeight="560"
-        Icon="pack://application:,,,/Assets/xprivacyguard.ico"
+        Title="xPrivacyGuard" Width="980" Height="650"
+        MinWidth="840" MinHeight="560"
+        Icon="pack://application:,,,/Assets/xprivacyguard-disconnected.ico"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource AppBackground}"
         Foreground="{StaticResource AppText}">
   <Grid>
     <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="195"/>
+      <ColumnDefinition Width="232"/>
       <ColumnDefinition Width="*"/>
     </Grid.ColumnDefinitions>
 
-    <!-- Left Navigation Sidebar -->
-    <Border Grid.Column="0" Background="{StaticResource DrawerBg}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="0,0,1,0" Padding="14,16">
+    <!-- Persistent Tablet-Style Navigation Drawer (exact match to Android ModalDrawerSheet) -->
+    <Border Grid.Column="0" Background="{StaticResource DrawerBg}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="0,0,1,0" Padding="16,20">
       <DockPanel LastChildFill="True">
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="2,0,0,18" VerticalAlignment="Center">
-          <Border Width="36" Height="36" CornerRadius="10" Background="{StaticResource AccentContainer}" BorderBrush="{StaticResource Accent}" BorderThickness="1" Padding="4" Margin="0,0,10,0">
-            <Image x:Name="BrandIconImage" Source="pack://application:,,,/Assets/xprivacyguard.png" RenderOptions.BitmapScalingMode="HighQuality"/>
-          </Border>
-          <StackPanel VerticalAlignment="Center">
-            <TextBlock Text="xPrivacyGuard" FontSize="16" FontWeight="Bold"/>
-            <TextBlock Text="ZERO TRUST" Foreground="{StaticResource Accent}" FontSize="9" FontWeight="Bold" Margin="0,1,0,0"/>
+        <!-- Brand Header + Live Status Card -->
+        <StackPanel DockPanel.Dock="Top">
+          <StackPanel Orientation="Horizontal" Margin="4,0,4,14" VerticalAlignment="Center">
+            <Border x:Name="BrandIconBorder" Width="40" Height="40" CornerRadius="12"
+                    Background="{StaticResource Surface}" BorderBrush="{StaticResource Danger}" BorderThickness="1"
+                    Padding="5" Margin="0,0,12,0">
+              <Image x:Name="BrandIconImage" Source="pack://application:,,,/Assets/xprivacyguard-disconnected.png" RenderOptions.BitmapScalingMode="HighQuality"/>
+            </Border>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="xPrivacyGuard" FontSize="17" FontWeight="Bold" Foreground="{StaticResource AppText}"/>
+              <TextBlock Text="Z E R O   T R U S T" Foreground="{StaticResource Accent}" FontSize="9.5" FontWeight="SemiBold" Margin="0,2,0,0"/>
+            </StackPanel>
           </StackPanel>
+
+          <!-- Subtle Live Status Indicator inside Drawer (matches Android) -->
+          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="10" Padding="12,8" Margin="2,0,2,14">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <Ellipse x:Name="StatusDot" Grid.Column="0" Width="8" Height="8" Fill="{StaticResource Danger}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+              <TextBlock x:Name="HeaderStatusText" Grid.Column="1" Text="Disconnected" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+              <TextBlock x:Name="DrawerTransportText" Grid.Column="2" Text="MASQUE" FontSize="10" FontWeight="Bold" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="6,0,0,0"/>
+            </Grid>
+          </Border>
+
+          <Border Height="1" Background="{StaticResource PanelBorder}" Margin="2,0,2,14"/>
         </StackPanel>
 
-        <!-- Bottom native status summary -->
-        <Border DockPanel.Dock="Bottom" Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,12,0,0">
+        <!-- Bottom Native Engine Card -->
+        <Border DockPanel.Dock="Bottom" Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="10" Padding="12,9" Margin="2,14,2,0">
           <StackPanel>
-            <TextBlock x:Name="NativeEngineText" Text="Aether: Checking..." FontSize="11" Foreground="{StaticResource Accent}" TextWrapping="Wrap"/>
+            <TextBlock x:Name="NativeEngineText" Text="Aether: Checking..." FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Accent}" TextWrapping="Wrap"/>
             <TextBlock x:Name="AdminStatusText" Text="Administrator" FontSize="10" Foreground="{StaticResource MutedText}" Margin="0,3,0,0"/>
           </StackPanel>
         </Border>
 
+        <!-- Navigation Items (crisp vector icons matching Android AppDestination) -->
         <StackPanel>
-          <RadioButton x:Name="NavDashboard" Content="⚡  Dashboard" Style="{StaticResource NavButtonStyle}" IsChecked="True" Checked="Nav_Checked" Tag="Dashboard"/>
-          <RadioButton x:Name="NavCloudflare" Content="☁  Cloudflare One" Style="{StaticResource NavButtonStyle}" Checked="Nav_Checked" Tag="Cloudflare"/>
-          <RadioButton x:Name="NavDns" Content="🌐  Zero Trust DNS" Style="{StaticResource NavButtonStyle}" Checked="Nav_Checked" Tag="Dns"/>
-          <RadioButton x:Name="NavSecurity" Content="⚙  Settings &amp; Split" Style="{StaticResource NavButtonStyle}" Checked="Nav_Checked" Tag="Security"/>
+          <RadioButton x:Name="NavDashboard" Style="{StaticResource NavButtonStyle}" IsChecked="True" Checked="Nav_Checked" Tag="Dashboard">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <Path Data="M12,2 L4,5 L4,11 C4,16.55 7.41,21.74 12,23 C16.59,21.74 20,16.55 20,11 L20,5 Z"
+                    Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                    Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Home" VerticalAlignment="Center"/>
+            </StackPanel>
+          </RadioButton>
+
+          <RadioButton x:Name="NavStats" Style="{StaticResource NavButtonStyle}" Checked="Nav_Checked" Tag="Stats">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <Path Data="M4,9 H8 V20 H4 Z M10,4 H14 V20 H10 Z M16,13 H20 V20 H16 Z"
+                    Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                    Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Stats &amp; Log" VerticalAlignment="Center"/>
+            </StackPanel>
+          </RadioButton>
+
+          <RadioButton x:Name="NavCloudflare" Style="{StaticResource NavButtonStyle}" Checked="Nav_Checked" Tag="Cloudflare">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <Path Data="M19.35,10.04 C18.67,6.59 15.64,4 12,4 C9.11,4 6.6,5.64 5.35,8.04 C2.34,8.36 0,10.91 0,14 C0,17.31 2.69,20 6,20 L19,20 C21.76,20 24,17.76 24,15 C24,12.36 21.95,10.22 19.35,10.04 Z"
+                    Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                    Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Cloudflare One" VerticalAlignment="Center"/>
+            </StackPanel>
+          </RadioButton>
+
+          <RadioButton x:Name="NavDns" Style="{StaticResource NavButtonStyle}" Checked="Nav_Checked" Tag="Dns">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <Path Data="M12,2 A10,10 0 1,0 12,22 A10,10 0 1,0 12,2 Z M4,12 H20 M12,2 C14.5,5 15.5,8.5 15.5,12 C15.5,15.5 14.5,19 12,22 C9.5,19 8.5,15.5 8.5,12 C8.5,8.5 9.5,5 12,2 Z"
+                    Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                    StrokeThickness="1.8" Fill="Transparent"
+                    Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Zero Trust DNS" VerticalAlignment="Center"/>
+            </StackPanel>
+          </RadioButton>
+
+          <RadioButton x:Name="NavSecurity" Style="{StaticResource NavButtonStyle}" Checked="Nav_Checked" Tag="Security">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <Path Data="M19.14,12.94 C19.18,12.64 19.2,12.33 19.2,12 C19.2,11.68 19.18,11.36 19.13,11.06 L21.16,9.48 C21.34,9.34 21.39,9.07 21.28,8.87 L19.36,5.55 C19.24,5.33 18.99,5.26 18.77,5.33 L16.38,6.29 C15.88,5.91 15.35,5.59 14.76,5.35 L14.4,2.81 C14.36,2.57 14.16,2.4 13.92,2.4 L10.08,2.4 C9.84,2.4 9.65,2.57 9.61,2.81 L9.25,5.35 C8.66,5.59 8.12,5.92 7.63,6.29 L5.24,5.33 C5.02,5.25 4.77,5.33 4.65,5.55 L2.74,8.87 C2.62,9.08 2.66,9.34 2.86,9.48 L4.89,11.06 C4.84,11.36 4.8,11.69 4.8,12 C4.8,12.31 4.82,12.64 4.87,12.94 L2.84,14.52 C2.66,14.66 2.61,14.93 2.72,15.13 L4.64,18.45 C4.76,18.67 5.01,18.74 5.23,18.67 L7.62,17.71 C8.12,18.09 8.65,18.41 9.24,18.65 L9.6,21.19 C9.65,21.43 9.84,21.6 10.08,21.6 L13.92,21.6 C14.16,21.6 14.36,21.43 14.39,21.19 L14.75,18.65 C15.34,18.41 15.88,18.09 16.37,17.71 L18.76,18.67 C18.98,18.75 19.23,18.67 19.35,18.45 L21.27,15.13 C21.39,14.91 21.34,14.66 21.15,14.52 L19.14,12.94 Z M12,15.6 C10.02,15.6 8.4,13.98 8.4,12 C8.4,10.02 10.02,8.4 12,8.4 C13.98,8.4 15.6,10.02 15.6,12 C15.6,13.98 13.98,15.6 12,15.6 Z"
+                    Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                    Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Settings &amp; Split" VerticalAlignment="Center"/>
+            </StackPanel>
+          </RadioButton>
         </StackPanel>
       </DockPanel>
     </Border>
 
     <!-- Main Content Area -->
-    <Grid Grid.Column="1" Margin="18,14">
+    <Grid Grid.Column="1" Margin="24,18,24,14">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="*"/>
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
 
-      <!-- Top Status Header -->
-      <Grid Grid.Row="0" Margin="0,0,0,14">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="*"/>
-          <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
-        <StackPanel Grid.Column="0">
-          <TextBlock x:Name="PageTitleText" Text="Dashboard" FontSize="19" FontWeight="Bold"/>
-          <TextBlock x:Name="PageSubtitleText" Text="Always-on Cloudflare One MASQUE tunnel with split-tunnel exclusions" Foreground="{StaticResource MutedText}" FontSize="11" Margin="0,2,0,0"/>
-        </StackPanel>
-        <Border Grid.Column="1" Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
-          <StackPanel Orientation="Horizontal">
-            <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="#EF4444" Margin="0,0,8,0"/>
-            <TextBlock x:Name="HeaderStatusText" Text="Disconnected" FontSize="11" FontWeight="SemiBold"/>
-          </StackPanel>
-        </Border>
-      </Grid>
+      <!-- Top Page Header (hidden on Home tab for uncluttered Android Home aesthetic) -->
+      <StackPanel x:Name="TopHeaderArea" Grid.Row="0" Margin="0,0,0,16" Visibility="Collapsed">
+        <TextBlock x:Name="PageTitleText" Text="Home" FontSize="20" FontWeight="Bold"/>
+        <TextBlock x:Name="PageSubtitleText" Text="Always-on Cloudflare One MASQUE tunnel" Foreground="{StaticResource MutedText}" FontSize="12" Margin="0,3,0,0"/>
+      </StackPanel>
 
-      <!-- TAB 1: DASHBOARD -->
+      <!-- TAB 1: HOME (Futuristic Centerpiece Orb — exact tablet-style port of Android HomeScreen) -->
       <Grid x:Name="DashboardView" Grid.Row="1" Visibility="Visible">
         <Grid.RowDefinitions>
+          <RowDefinition Height="*"/>
           <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Centerpiece Glowing Orbital Power Button + Status -->
+        <StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+          <Button x:Name="ConnectToggleButton" Style="{StaticResource PowerOrbButtonStyle}"
+                  Click="ConnectToggleButton_Click" Width="264" Height="264"
+                  ToolTip="Click to connect or disconnect Zero Trust VPN">
+            <Grid Width="264" Height="264">
+              <!-- Ambient Radial Glow -->
+              <Ellipse x:Name="OrbGlowEllipse" Width="264" Height="264" Opacity="0.32">
+                <Ellipse.Fill>
+                  <RadialGradientBrush x:Name="OrbGlowBrush">
+                    <GradientStop x:Name="OrbGlowStop0" Color="#66EF4444" Offset="0.0"/>
+                    <GradientStop x:Name="OrbGlowStop1" Color="#1AEF4444" Offset="0.55"/>
+                    <GradientStop Color="#00000000" Offset="1.0"/>
+                  </RadialGradientBrush>
+                </Ellipse.Fill>
+              </Ellipse>
+
+              <!-- Outer Orbital Ring -->
+              <Ellipse x:Name="OrbOuterRing" Width="232" Height="232"
+                       Stroke="#B32C2C33" StrokeThickness="1.5" Fill="Transparent"/>
+
+              <!-- Mid Orbital Accent Ring -->
+              <Ellipse x:Name="OrbMidRing" Width="202" Height="202"
+                       Stroke="#FF2C2C33" StrokeThickness="2" Fill="Transparent"/>
+
+              <!-- Core Orb Surface -->
+              <Ellipse x:Name="OrbCoreBg" Width="174" Height="174">
+                <Ellipse.Fill>
+                  <RadialGradientBrush>
+                    <GradientStop x:Name="OrbCoreCenterStop" Color="#FF222227" Offset="0.0"/>
+                    <GradientStop Color="#FF1A1A1E" Offset="1.0"/>
+                  </RadialGradientBrush>
+                </Ellipse.Fill>
+              </Ellipse>
+
+              <!-- Crisp Glowing Core Border -->
+              <Ellipse x:Name="OrbCoreBorder" Width="174" Height="174"
+                       Stroke="{StaticResource Danger}" StrokeThickness="3.5" Fill="Transparent"/>
+
+              <!-- Material Power Icon (PowerSettingsNew) -->
+              <Viewbox Width="62" Height="62" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Canvas Width="24" Height="24">
+                  <Path x:Name="OrbPowerIcon"
+                        Data="M13,3 H11 V13 H13 V3 Z M17.83,5.17 L16.41,6.59 C17.99,7.86 19,9.81 19,12 C19,15.87 15.87,19 12,19 C8.13,19 5,15.87 5,12 C5,9.81 6.01,7.86 7.58,6.58 L6.17,5.17 C4.23,6.82 3,9.26 3,12 C3,16.97 7.03,21 12,21 C16.97,21 21,16.97 21,12 C21,9.26 19.77,6.82 17.83,5.17 Z"
+                        Fill="{StaticResource Danger}"/>
+                </Canvas>
+              </Viewbox>
+            </Grid>
+          </Button>
+
+          <!-- Bold Uppercase Status Title -->
+          <TextBlock x:Name="DashStateHeadline" Text="D I S C O N N E C T E D"
+                     FontSize="22" FontWeight="Bold" HorizontalAlignment="Center"
+                     Foreground="{StaticResource AppText}" Margin="0,18,0,8"/>
+
+          <!-- Clean Centered Subtitle -->
+          <TextBlock x:Name="DashStateDetail" Text="Click to secure your connection"
+                     FontSize="13" Foreground="{StaticResource MutedText}"
+                     HorizontalAlignment="Center" TextAlignment="Center"
+                     MaxWidth="460" TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <!-- Bottom Minimal Futuristic Protocol Pill + Subtle Quick Toggles -->
+        <StackPanel Grid.Row="1" HorizontalAlignment="Center" Margin="0,12,0,10">
+          <Button x:Name="ProtocolPillButton" Style="{StaticResource PillButtonStyle}"
+                  Click="ProtocolPill_Click" HorizontalAlignment="Center" Margin="0,0,0,14">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <Ellipse x:Name="ProtocolDot" Width="7" Height="7" Fill="{StaticResource SubtleText}" Margin="0,0,9,0"/>
+              <TextBlock x:Name="ProtocolLabelText" Text="Cloudflare MASQUE" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource MutedText}"/>
+              <TextBlock x:Name="AlwaysOnBadgeText" Text="  •  Always-On" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Accent}" Visibility="Collapsed"/>
+            </StackPanel>
+          </Button>
+
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <CheckBox x:Name="DashAlwaysOnCheck" Content="Always-On VPN" FontSize="12" Foreground="{StaticResource MutedText}"
+                      Margin="0,0,22,0" Checked="QuickToggle_Changed" Unchecked="QuickToggle_Changed"/>
+            <CheckBox x:Name="DashKillSwitchCheck" Content="Fail-Closed Kill Switch (WFP)" FontSize="12" Foreground="{StaticResource MutedText}"
+                      Checked="QuickToggle_Changed" Unchecked="QuickToggle_Changed"/>
+          </StackPanel>
+        </StackPanel>
+      </Grid>
+
+      <!-- TAB 2: STATS & SPLIT-TUNNEL ACTIVITY LOG -->
+      <Grid x:Name="StatsView" Grid.Row="1" Visibility="Collapsed">
+        <Grid.RowDefinitions>
           <RowDefinition Height="Auto"/>
           <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Hero Connection Card -->
-        <Border Grid.Row="0" Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
-          <Grid>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="*"/>
-              <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <StackPanel VerticalAlignment="Center" Margin="0,0,14,0">
-              <TextBlock x:Name="DashStateHeadline" Text="Tunnel Disconnected" FontSize="18" FontWeight="Bold"/>
-              <TextBlock x:Name="DashStateDetail" Text="Always-on VPN routes all traffic through Cloudflare One except your configured streaming &amp; gaming exclusions." Foreground="{StaticResource MutedText}" FontSize="12" Margin="0,4,0,10" TextWrapping="Wrap"/>
-              <WrapPanel>
-                <CheckBox x:Name="DashAlwaysOnCheck" Content="Always-On VPN (auto-connect &amp; reconnect)" FontSize="12" Margin="0,0,18,4" Checked="QuickToggle_Changed" Unchecked="QuickToggle_Changed"/>
-                <CheckBox x:Name="DashKillSwitchCheck" Content="Fail-closed Kill Switch (WFP)" FontSize="12" Margin="0,0,0,4" Checked="QuickToggle_Changed" Unchecked="QuickToggle_Changed"/>
-              </WrapPanel>
-            </StackPanel>
-            <Button x:Name="ConnectToggleButton" Grid.Column="1" Content="Connect" Click="ConnectToggleButton_Click"
-                    MinWidth="132" Height="44" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"
-                    Background="{StaticResource Accent}" BorderBrush="{StaticResource Accent}" Foreground="#121214"/>
-          </Grid>
-        </Border>
-
-        <!-- Telemetry Cards -->
-        <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,12">
-          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="9" Padding="11" Margin="0,0,8,0">
+        <!-- Telemetry Bento Cards -->
+        <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,14">
+          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,0,10,0">
             <StackPanel>
-              <TextBlock Text="ENDPOINT / CARRIER" FontSize="9" FontWeight="Bold" Foreground="{StaticResource MutedText}"/>
-              <TextBlock x:Name="MetricPeerText" Text="Not connected" FontSize="12" FontWeight="SemiBold" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
-              <TextBlock x:Name="MetricCarrierText" Text="MASQUE H3" FontSize="10" Foreground="{StaticResource AccentBlue}" Margin="0,2,0,0"/>
+              <TextBlock Text="ENDPOINT / CARRIER" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource MutedText}"/>
+              <TextBlock x:Name="MetricPeerText" Text="Not connected" FontSize="13" FontWeight="SemiBold" Margin="0,6,0,0" TextTrimming="CharacterEllipsis"/>
+              <TextBlock x:Name="MetricCarrierText" Text="MASQUE H3" FontSize="11" Foreground="{StaticResource AccentBlue}" Margin="0,3,0,0"/>
             </StackPanel>
           </Border>
-          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="9" Padding="11" Margin="0,0,8,0">
+          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,0,10,0">
             <StackPanel>
-              <TextBlock Text="TUNNEL ADDRESS" FontSize="9" FontWeight="Bold" Foreground="{StaticResource MutedText}"/>
-              <TextBlock x:Name="MetricIpText" Text="--" FontSize="12" FontWeight="SemiBold" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
-              <TextBlock x:Name="MetricMtuText" Text="MTU 1280" FontSize="10" Foreground="{StaticResource MutedText}" Margin="0,2,0,0"/>
+              <TextBlock Text="TUNNEL ADDRESS" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource MutedText}"/>
+              <TextBlock x:Name="MetricIpText" Text="--" FontSize="13" FontWeight="SemiBold" Margin="0,6,0,0" TextTrimming="CharacterEllipsis"/>
+              <TextBlock x:Name="MetricMtuText" Text="MTU 1280" FontSize="11" Foreground="{StaticResource MutedText}" Margin="0,3,0,0"/>
             </StackPanel>
           </Border>
-          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="9" Padding="11" Margin="0,0,8,0">
+          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,0,10,0">
             <StackPanel>
-              <TextBlock Text="SPLIT TUNNEL" FontSize="9" FontWeight="Bold" Foreground="{StaticResource MutedText}"/>
-              <TextBlock x:Name="MetricBypassText" Text="0 bypassed" FontSize="13" FontWeight="Bold" Foreground="{StaticResource Accent}" Margin="0,4,0,0"/>
-              <TextBlock x:Name="MetricSplitInfoText" Text="Streaming &amp; Games" FontSize="10" Foreground="{StaticResource MutedText}" Margin="0,2,0,0"/>
+              <TextBlock Text="SPLIT TUNNEL" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource MutedText}"/>
+              <TextBlock x:Name="MetricBypassText" Text="0 bypassed" FontSize="14" FontWeight="Bold" Foreground="{StaticResource Accent}" Margin="0,6,0,0"/>
+              <TextBlock x:Name="MetricSplitInfoText" Text="Streaming &amp; Games" FontSize="11" Foreground="{StaticResource MutedText}" Margin="0,3,0,0"/>
             </StackPanel>
           </Border>
-          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="9" Padding="11">
+          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="14">
             <StackPanel>
-              <TextBlock Text="THROUGHPUT" FontSize="9" FontWeight="Bold" Foreground="{StaticResource MutedText}"/>
-              <TextBlock x:Name="MetricBytesText" Text="↑ 0 B  ↓ 0 B" FontSize="12" FontWeight="SemiBold" Margin="0,4,0,0"/>
-              <TextBlock x:Name="MetricWfpText" Text="WFP Kill Switch" FontSize="10" Foreground="{StaticResource MutedText}" Margin="0,2,0,0"/>
+              <TextBlock Text="THROUGHPUT" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource MutedText}"/>
+              <TextBlock x:Name="MetricBytesText" Text="↑ 0 B  ↓ 0 B" FontSize="13" FontWeight="SemiBold" Margin="0,6,0,0"/>
+              <TextBlock x:Name="MetricWfpText" Text="WFP Kill Switch" FontSize="11" Foreground="{StaticResource MutedText}" Margin="0,3,0,0"/>
             </StackPanel>
           </Border>
         </UniformGrid>
 
         <!-- Split-Tunnel Activity Log -->
-        <Border Grid.Row="2" Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="10" Padding="12">
+        <Border Grid.Row="1" Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="14">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
               <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <Grid Grid.Row="0" Margin="0,0,0,8">
+            <Grid Grid.Row="0" Margin="0,0,0,10">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Grid.Column="0" Text="SPLIT-TUNNEL BYPASS ACTIVITY" FontSize="10" FontWeight="Bold" Foreground="{StaticResource MutedText}" VerticalAlignment="Center"/>
-              <Button Grid.Column="1" Content="Clear log" Click="ClearTrafficLog_Click" Padding="10,4" FontSize="11"/>
+              <TextBlock Grid.Column="0" Text="SPLIT-TUNNEL BYPASS ACTIVITY" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource MutedText}" VerticalAlignment="Center"/>
+              <Button Grid.Column="1" Content="Clear log" Click="ClearTrafficLog_Click" Padding="10,5" FontSize="11"/>
             </Grid>
-            <ListView x:Name="TrafficLogList" Grid.Row="1" Background="Transparent" BorderThickness="0">
-              <ListView.ItemContainerStyle>
-                <Style TargetType="ListViewItem">
-                  <Setter Property="Padding" Value="8,5"/>
-                  <Setter Property="Margin" Value="0,0,0,2"/>
-                  <Setter Property="Background" Value="#151518"/>
-                  <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                </Style>
-              </ListView.ItemContainerStyle>
+            <ListView x:Name="TrafficLogList" Grid.Row="1" Background="Transparent" BorderThickness="0"
+                      ItemContainerStyle="{StaticResource DarkListViewItemStyle}">
               <ListView.ItemTemplate>
                 <DataTemplate>
                   <Grid>
                     <Grid.ColumnDefinitions>
-                      <ColumnDefinition Width="62"/>
-                      <ColumnDefinition Width="68"/>
+                      <ColumnDefinition Width="64"/>
+                      <ColumnDefinition Width="70"/>
                       <ColumnDefinition Width="68"/>
                       <ColumnDefinition Width="*"/>
-                      <ColumnDefinition Width="160"/>
+                      <ColumnDefinition Width="170"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="{Binding TimeText}" Foreground="{StaticResource MutedText}" FontSize="11" FontFamily="Consolas"/>
                     <TextBlock Grid.Column="1" Text="{Binding ActionText}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource Accent}"/>
                     <TextBlock Grid.Column="2" Text="{Binding Protocol}" FontSize="11" Foreground="{StaticResource AccentBlue}"/>
                     <TextBlock Grid.Column="3" Text="{Binding TargetHost}" FontSize="11" TextTrimming="CharacterEllipsis"/>
-                    <TextBlock Grid.Column="4" Text="{Binding DetailText}" FontSize="10" Foreground="{StaticResource MutedText}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Grid.Column="4" Text="{Binding DetailText}" FontSize="10.5" Foreground="{StaticResource MutedText}" TextTrimming="CharacterEllipsis"/>
                   </Grid>
                 </DataTemplate>
               </ListView.ItemTemplate>
@@ -177,10 +288,10 @@
         </Border>
       </Grid>
 
-      <!-- TAB 2: CLOUDFLARE ONE -->
+      <!-- TAB 3: CLOUDFLARE ONE -->
       <ScrollViewer x:Name="CloudflareView" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
         <StackPanel>
-          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
+          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,12">
             <StackPanel>
               <TextBlock Text="Cloudflare Zero Trust Sign-In (Email OTP)" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
               <Grid>
@@ -198,7 +309,7 @@
                   <TextBox x:Name="CfEmailBox"/>
                 </StackPanel>
               </Grid>
-              <WrapPanel Margin="0,10,0,0">
+              <WrapPanel Margin="0,12,0,0">
                 <Button x:Name="CfRequestCodeBtn" Content="Send Email Code" Click="CfRequestCode_Click" Margin="0,0,8,4" Background="{StaticResource AccentContainer}" BorderBrush="{StaticResource Accent}" Foreground="{StaticResource Accent}"/>
                 <TextBox x:Name="CfOtpCodeBox" Width="130" Margin="0,0,8,4" ToolTip="6-digit code from email"/>
                 <Button x:Name="CfSubmitCodeBtn" Content="Verify &amp; Enroll" Click="CfSubmitCode_Click" Margin="0,0,8,4"/>
@@ -208,7 +319,7 @@
             </StackPanel>
           </Border>
 
-          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
+          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,12">
             <StackPanel>
               <Grid Margin="0,0,0,10">
                 <Grid.ColumnDefinitions>
@@ -235,7 +346,7 @@
               </Grid>
               <TextBlock Text="Custom MASQUE Peer Endpoint (optional, e.g. 162.159.197.2:443)" FontSize="11" Foreground="{StaticResource MutedText}" Margin="0,10,0,4"/>
               <TextBox x:Name="CfCustomPeerBox"/>
-              <WrapPanel Margin="0,10,0,0">
+              <WrapPanel Margin="0,12,0,0">
                 <CheckBox x:Name="CfPreferHttp2Check" Content="Prefer HTTP/2 over TCP (UDP fallback)" Margin="0,0,18,4"/>
                 <CheckBox x:Name="CfEnableEchCheck" Content="Enable Encrypted Client Hello (ECH)" Margin="0,0,0,4"/>
               </WrapPanel>
@@ -246,7 +357,7 @@
             </StackPanel>
           </Border>
 
-          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="10" Padding="16">
+          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="16">
             <StackPanel>
               <TextBlock Text="Enrolled Device Metadata" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8"/>
               <TextBlock x:Name="CfEnrolledSummaryText" Text="Not enrolled yet." Foreground="{StaticResource MutedText}" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap"/>
@@ -255,10 +366,10 @@
         </StackPanel>
       </ScrollViewer>
 
-      <!-- TAB 3: ZERO TRUST DNS -->
+      <!-- TAB 4: ZERO TRUST DNS -->
       <ScrollViewer x:Name="DnsView" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
         <StackPanel>
-          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
+          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,12">
             <StackPanel>
               <Grid Margin="0,0,0,10">
                 <Grid.ColumnDefinitions>
@@ -290,7 +401,7 @@
             </StackPanel>
           </Border>
 
-          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="10" Padding="16">
+          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="16">
             <StackPanel>
               <TextBlock Text="Split / Private DNS (Local LAN Domain)" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
               <Grid>
@@ -315,39 +426,39 @@
         </StackPanel>
       </ScrollViewer>
 
-      <!-- TAB 4: SETTINGS, SPLIT TUNNEL EXCLUSIONS & XSECURITY -->
+      <!-- TAB 5: SETTINGS, SPLIT TUNNEL EXCLUSIONS & XSECURITY -->
       <ScrollViewer x:Name="SecurityView" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
         <StackPanel>
           <!-- Split Tunnel Exclusions Card -->
-          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
+          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,12">
             <StackPanel>
               <TextBlock Text="Split Tunnel Exclusions (Bypass Cloudflare Zero Trust)" FontSize="14" FontWeight="SemiBold"/>
               <TextBlock Text="Everything goes through the always-on VPN except the streaming services, gaming clients, domains, and game executables excluded below." Foreground="{StaticResource MutedText}" FontSize="11" Margin="0,3,0,12" TextWrapping="Wrap"/>
 
-              <TextBlock Text="US STREAMING PRESETS (BYPASSED BY DEFAULT)" FontSize="10" FontWeight="Bold" Foreground="{StaticResource Accent}" Margin="0,0,0,6"/>
+              <TextBlock Text="US STREAMING PRESETS (BYPASSED BY DEFAULT)" FontSize="10" FontWeight="Bold" Foreground="{StaticResource Accent}" Margin="0,0,0,8"/>
               <WrapPanel Margin="0,0,0,10">
-                <CheckBox x:Name="SplitNetflixCheck" Content="Netflix" Margin="0,0,16,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
-                <CheckBox x:Name="SplitHuluCheck" Content="Hulu" Margin="0,0,16,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
-                <CheckBox x:Name="SplitPrimeVideoCheck" Content="Amazon Prime Video" Margin="0,0,16,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
-                <CheckBox x:Name="SplitDisneyPlusCheck" Content="Disney+" Margin="0,0,16,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
-                <CheckBox x:Name="SplitMaxCheck" Content="Max (HBO Max)" Margin="0,0,16,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
-                <CheckBox x:Name="SplitAppleTvCheck" Content="Apple TV+" Margin="0,0,16,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
-                <CheckBox x:Name="SplitAppleOneCheck" Content="Apple One" Margin="0,0,16,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
-                <CheckBox x:Name="SplitPeacockCheck" Content="Peacock" Margin="0,0,16,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
-                <CheckBox x:Name="SplitYouTubeCheck" Content="YouTube / Premium" Margin="0,0,16,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
-                <CheckBox x:Name="SplitYouTubeTvCheck" Content="YouTube TV" Margin="0,0,16,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
-                <CheckBox x:Name="SplitSlingTvCheck" Content="Sling TV" Margin="0,0,16,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
-                <CheckBox x:Name="SplitPlutoCheck" Content="Pluto TV" Margin="0,0,16,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
-                <CheckBox x:Name="SplitParamountPlusCheck" Content="Paramount+" Margin="0,0,16,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
-                <CheckBox x:Name="SplitEspnPlusCheck" Content="ESPN+" Margin="0,0,16,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
-                <CheckBox x:Name="SplitSpotifyCheck" Content="Spotify" Margin="0,0,16,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
-                <CheckBox x:Name="SplitTubiCheck" Content="Tubi" Margin="0,0,16,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitNetflixCheck" Content="Netflix" Margin="0,0,16,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitHuluCheck" Content="Hulu" Margin="0,0,16,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitPrimeVideoCheck" Content="Amazon Prime Video" Margin="0,0,16,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitDisneyPlusCheck" Content="Disney+" Margin="0,0,16,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitMaxCheck" Content="Max (HBO Max)" Margin="0,0,16,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitAppleTvCheck" Content="Apple TV+" Margin="0,0,16,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitAppleOneCheck" Content="Apple One" Margin="0,0,16,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitPeacockCheck" Content="Peacock" Margin="0,0,16,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitYouTubeCheck" Content="YouTube / Premium" Margin="0,0,16,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitYouTubeTvCheck" Content="YouTube TV" Margin="0,0,16,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitSlingTvCheck" Content="Sling TV" Margin="0,0,16,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitPlutoCheck" Content="Pluto TV" Margin="0,0,16,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitParamountPlusCheck" Content="Paramount+" Margin="0,0,16,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitEspnPlusCheck" Content="ESPN+" Margin="0,0,16,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitSpotifyCheck" Content="Spotify" Margin="0,0,16,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitTubiCheck" Content="Tubi" Margin="0,0,16,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
               </WrapPanel>
 
-              <TextBlock Text="GAMING &amp; SYSTEM PRESETS (BYPASSED BY DEFAULT)" FontSize="10" FontWeight="Bold" Foreground="{StaticResource Accent}" Margin="0,0,0,6"/>
+              <TextBlock Text="GAMING &amp; SYSTEM PRESETS (BYPASSED BY DEFAULT)" FontSize="10" FontWeight="Bold" Foreground="{StaticResource Accent}" Margin="0,0,0,8"/>
               <WrapPanel Margin="0,0,0,12">
-                <CheckBox x:Name="SplitGamingCheck" Content="Gaming Clients (Steam / Proton, Epic, Ubisoft Connect, Origin / EA, GOG Galaxy, Xbox App, Battle.net, Riot)" Margin="0,0,16,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
-                <CheckBox x:Name="SplitPhoneLinkCheck" Content="Windows Phone Link (Wi-Fi / Data / Bluetooth)" Margin="0,0,0,6" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitGamingCheck" Content="Gaming Clients (Steam / Proton, Epic, Ubisoft Connect, Origin / EA, GOG Galaxy, Xbox App, Battle.net, Riot)" Margin="0,0,16,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
+                <CheckBox x:Name="SplitPhoneLinkCheck" Content="Windows Phone Link (Wi-Fi / Data / Bluetooth)" Margin="0,0,0,8" Checked="SplitPreset_Changed" Unchecked="SplitPreset_Changed"/>
               </WrapPanel>
 
               <Grid>
@@ -366,7 +477,8 @@
 
                 <StackPanel Grid.Column="2">
                   <TextBlock Text="EXCLUDED GAMES &amp; EXECUTABLES" FontSize="10" FontWeight="Bold" Foreground="{StaticResource MutedText}" Margin="0,0,0,4"/>
-                  <ListView x:Name="SplitAppsList" Height="100" Background="#121214" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1">
+                  <ListView x:Name="SplitAppsList" Height="100" Background="#121214" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1"
+                            ItemContainerStyle="{StaticResource DarkListViewItemStyle}">
                     <ListView.ItemTemplate>
                       <DataTemplate>
                         <Grid>
@@ -374,7 +486,7 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                           </Grid.ColumnDefinitions>
-                          <TextBlock Text="{Binding}" FontSize="10" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                          <TextBlock Text="{Binding}" FontSize="10.5" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                           <Button Grid.Column="1" Content="✕" Tag="{Binding}" Click="RemoveSplitExe_Click" Padding="6,2" FontSize="10" Margin="6,0,0,0"/>
                         </Grid>
                       </DataTemplate>
@@ -390,7 +502,7 @@
           </Border>
 
           <!-- xSecurity Posture Sync Card -->
-          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
+          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,12">
             <StackPanel>
               <TextBlock Text="xServer / xSecurity Posture Sync" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
               <Grid>
@@ -408,7 +520,7 @@
                   <PasswordBox x:Name="XSecApiKeyBox"/>
                 </StackPanel>
               </Grid>
-              <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+              <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                 <Button Content="Save &amp; Sync Posture Now" Click="SyncXSecurity_Click" Background="{StaticResource AccentContainer}" BorderBrush="{StaticResource Accent}" Foreground="{StaticResource Accent}" Margin="0,0,8,0"/>
                 <Button Content="Refresh Local Posture" Click="RefreshPosture_Click"/>
               </StackPanel>
@@ -417,11 +529,11 @@
           </Border>
 
           <!-- Preferences & Backup -->
-          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="10" Padding="16">
+          <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="16">
             <StackPanel>
               <TextBlock Text="Preferences &amp; Backup" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
-              <CheckBox x:Name="StartWithWindowsCheck" Content="Start with Windows (elevated, minimized to system tray)" Checked="StartWithWindowsCheck_Changed" Unchecked="StartWithWindowsCheck_Changed" Margin="0,0,0,8"/>
-              <CheckBox x:Name="LanBypassCheck" Content="Bypass local LAN subnets (192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12)" Checked="SettingToggle_Changed" Unchecked="SettingToggle_Changed" Margin="0,0,0,12"/>
+              <CheckBox x:Name="StartWithWindowsCheck" Content="Start with Windows (elevated, minimized to system tray)" Checked="StartWithWindowsCheck_Changed" Unchecked="StartWithWindowsCheck_Changed" Margin="0,0,0,10"/>
+              <CheckBox x:Name="LanBypassCheck" Content="Bypass local LAN subnets (192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12)" Checked="SettingToggle_Changed" Unchecked="SettingToggle_Changed" Margin="0,0,0,14"/>
               <StackPanel Orientation="Horizontal">
                 <Button Content="Export Backup" Click="ExportBackup_Click" Margin="0,0,8,0"/>
                 <Button Content="Import Backup" Click="ImportBackup_Click" Margin="0,0,8,0"/>
@@ -432,13 +544,13 @@
         </StackPanel>
       </ScrollViewer>
 
-      <!-- Bottom Status Bar -->
+      <!-- Subtle Bottom Status Bar -->
       <Grid Grid.Row="2" Margin="2,10,2,0">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*"/>
           <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
-        <TextBlock Grid.Column="0" Text="xPrivacyGuard  •  GPL-3.0  •  Always-On Aether MASQUE + Wintun + WFP" Foreground="{StaticResource MutedText}" FontSize="10" TextTrimming="CharacterEllipsis"/>
+        <TextBlock Grid.Column="0" Text="xPrivacyGuard  •  GPL-3.0  •  Always-On Aether MASQUE + Wintun + WFP" Foreground="{StaticResource SubtleText}" FontSize="10" TextTrimming="CharacterEllipsis"/>
         <TextBlock x:Name="StatusText" Grid.Column="1" Text="Ready" Foreground="{StaticResource MutedText}" FontSize="10" Margin="12,0,0,0"/>
       </Grid>
     </Grid>
