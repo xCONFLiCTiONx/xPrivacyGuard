@@ -18,7 +18,7 @@ Site-specific and general network/privacy filter lists for **xPrivacy Guard**, i
 These lists are self-hosted on xServer (served by the PrivacyFilters service behind Caddy). Add a list's URL to your blocker's custom filter list setting, e.g.:
 
 ```
-https://filters.home.xconflictionx.cc/Tubi/filters.txt
+https://filters.xserver.local/Tubi/filters.txt
 ```
 
 The URL resolves via local DNS (AdGuard Home), so it is only reachable on the home network. You can also copy a file's contents into a local/custom ruleset.

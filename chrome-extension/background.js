@@ -276,6 +276,127 @@ function initGpc() {
   });
 }
 
+// --- Dynamic Toolbar Icon (Green = Protected, Orange = Partial / Non-Web, Red = Unprotected) ---
+const ICON_PATHS = {
+  green: {
+    16: "icons/icon-green-16.png",
+    32: "icons/icon-green-32.png",
+    48: "icons/icon-green-48.png",
+    128: "icons/icon-green-128.png"
+  },
+  orange: {
+    16: "icons/icon-orange-16.png",
+    32: "icons/icon-orange-32.png",
+    48: "icons/icon-orange-48.png",
+    128: "icons/icon-orange-128.png"
+  },
+  red: {
+    16: "icons/icon-red-16.png",
+    32: "icons/icon-red-32.png",
+    48: "icons/icon-red-48.png",
+    128: "icons/icon-red-128.png"
+  }
+};
+
+const tabIconStates = new Map();
+let iconListsLoaded = false;
+let iconListsLoadPromise = null;
+let cachedExcludedDomains = [];
+let cachedFilterDisabledDomains = [];
+
+function matchesDomainList(hostname, list) {
+  if (!hostname || !Array.isArray(list) || !list.length) return false;
+  const host = hostname.toLowerCase().replace(/\.$/, "");
+  return list.some((domain) => host === domain || host.endsWith("." + domain));
+}
+
+function getProtectionIconState(url, excludedList, filterDisabledList) {
+  if (!url || typeof url !== "string") {
+    return { state: "orange", title: "xPrivacyGuard — Non-web page" };
+  }
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch (_) {
+    return { state: "orange", title: "xPrivacyGuard — Non-web page" };
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:" && parsed.protocol !== "file:") {
+    return { state: "orange", title: "xPrivacyGuard — Non-web page" };
+  }
+  const hostname = (parsed.hostname || "").toLowerCase().replace(/\.$/, "");
+  if (hostname && matchesDomainList(hostname, excludedList)) {
+    return { state: "red", title: `xPrivacyGuard — Unprotected (${hostname} excluded)` };
+  }
+  if (hostname && matchesDomainList(hostname, filterDisabledList)) {
+    return { state: "orange", title: `xPrivacyGuard — Partial Protection (filters paused on ${hostname})` };
+  }
+  return { state: "green", title: hostname ? `xPrivacyGuard — Protected (${hostname})` : "xPrivacyGuard — Protected" };
+}
+
+async function ensureIconDomainListsLoaded() {
+  if (iconListsLoaded) return;
+  if (!iconListsLoadPromise) {
+    iconListsLoadPromise = (async () => {
+      try {
+        if (chrome.storage && chrome.storage.local) {
+          const data = await chrome.storage.local.get(["excludedDomains", "filterDisabledDomains"]);
+          cachedExcludedDomains = normalizeExcludedDomains(data && data.excludedDomains);
+          cachedFilterDisabledDomains = normalizeExcludedDomains(data && data.filterDisabledDomains);
+        }
+      } catch (_) {
+      } finally {
+        iconListsLoaded = true;
+        iconListsLoadPromise = null;
+      }
+    })();
+  }
+  await iconListsLoadPromise;
+}
+
+async function updateTabIcon(tabId, tabUrl) {
+  if (typeof tabId !== "number" || tabId <= 0 || !chrome.action || !chrome.action.setIcon) return;
+  await ensureIconDomainListsLoaded();
+
+  let url = tabUrl;
+  if (url === undefined && chrome.tabs && chrome.tabs.get) {
+    try {
+      const tab = await chrome.tabs.get(tabId);
+      url = tab && tab.url;
+    } catch (_) {
+      return;
+    }
+  }
+
+  const { state, title } = getProtectionIconState(url, cachedExcludedDomains, cachedFilterDisabledDomains);
+  const cacheKey = `${state}|${title}`;
+  if (tabIconStates.get(tabId) === cacheKey) return;
+  tabIconStates.set(tabId, cacheKey);
+
+  try {
+    await chrome.action.setIcon({ tabId, path: ICON_PATHS[state] || ICON_PATHS.orange });
+  } catch (_) {}
+  if (chrome.action.setTitle) {
+    try {
+      await chrome.action.setTitle({ tabId, title });
+    } catch (_) {}
+  }
+}
+
+async function refreshAllTabIcons() {
+  if (!chrome.tabs || !chrome.tabs.query) return;
+  await ensureIconDomainListsLoaded();
+  tabIconStates.clear();
+  try {
+    const tabs = await chrome.tabs.query({});
+    await Promise.all((tabs || []).map((tab) => {
+      if (tab && typeof tab.id === "number" && tab.id > 0) {
+        return updateTabIcon(tab.id, tab.url || "");
+      }
+      return Promise.resolve();
+    }));
+  } catch (_) {}
+}
+
 // --- Tab Session Block Counter & Icon Badge ---
 const tabBlockCounts = new Map();
 const seenBlockRequests = new Map();
@@ -412,6 +533,25 @@ if (chrome.tabs && chrome.tabs.onUpdated) {
     if (urlToCheck) {
       applyTabMute(tabId, urlToCheck);
     }
+    if (changeInfo.url !== undefined || changeInfo.status === "loading" || changeInfo.status === "complete") {
+      updateTabIcon(tabId, urlToCheck || "").catch(() => {});
+    }
+  });
+}
+
+if (chrome.tabs && chrome.tabs.onActivated) {
+  chrome.tabs.onActivated.addListener((activeInfo) => {
+    if (activeInfo && typeof activeInfo.tabId === "number" && activeInfo.tabId > 0) {
+      updateTabIcon(activeInfo.tabId).catch(() => {});
+    }
+  });
+}
+
+if (chrome.tabs && chrome.tabs.onCreated) {
+  chrome.tabs.onCreated.addListener((tab) => {
+    if (tab && typeof tab.id === "number" && tab.id > 0) {
+      updateTabIcon(tab.id, tab.url || tab.pendingUrl || "").catch(() => {});
+    }
   });
 }
 
@@ -419,6 +559,7 @@ if (chrome.tabs && chrome.tabs.onRemoved) {
   chrome.tabs.onRemoved.addListener((tabId) => {
     tabBlockCounts.delete(tabId);
     seenBlockRequests.delete(tabId);
+    tabIconStates.delete(tabId);
     persistSessionCounts().catch(() => {});
     if (typeof CookieManager !== "undefined") {
       CookieManager.scheduleCleanup("tab");
@@ -438,7 +579,11 @@ if (chrome.tabs && chrome.tabs.onReplaced) {
   chrome.tabs.onReplaced.addListener((addedTabId, removedTabId) => {
     tabBlockCounts.delete(removedTabId);
     seenBlockRequests.delete(removedTabId);
+    tabIconStates.delete(removedTabId);
     persistSessionCounts().catch(() => {});
+    if (typeof addedTabId === "number" && addedTabId > 0) {
+      updateTabIcon(addedTabId).catch(() => {});
+    }
   });
 }
 
@@ -607,6 +752,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 chrome.runtime.onInstalled.addListener((details) => {
   initBadgeAppearance();
+  refreshAllTabIcons().catch(() => {});
   applyAllMutedSites().catch(() => {});
   syncContentScripts().catch((err) => {
     console.error("xPrivacyGuard: Error syncing content scripts:", err);
@@ -630,6 +776,7 @@ chrome.runtime.onInstalled.addListener((details) => {
 chrome.runtime.onStartup.addListener(() => {
   initBadgeAppearance();
   initTabBlockCounts();
+  refreshAllTabIcons().catch(() => {});
   syncContentScripts().catch((err) => {
     console.error("xPrivacyGuard: Error syncing content scripts:", err);
   });
@@ -660,6 +807,17 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === "local") {
+    if (changes.excludedDomains) {
+      cachedExcludedDomains = normalizeExcludedDomains(changes.excludedDomains.newValue);
+      iconListsLoaded = true;
+    }
+    if (changes.filterDisabledDomains) {
+      cachedFilterDisabledDomains = normalizeExcludedDomains(changes.filterDisabledDomains.newValue);
+      iconListsLoaded = true;
+    }
+    if (changes.excludedDomains || changes.filterDisabledDomains) {
+      refreshAllTabIcons().catch(() => {});
+    }
     if (changes.excludedDomains || changes.mode || changes.enableGPC) {
       syncContentScripts().catch((err) => {
         console.error("xPrivacyGuard: Error syncing protection settings:", err);
@@ -686,6 +844,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 
 initBadgeAppearance();
 initTabBlockCounts();
+refreshAllTabIcons().catch(() => {});
 if (chrome.storage && chrome.storage.local) {
   chrome.storage.local.get(["disableFilterStats"], (res) => {
     disableFilterStats = res && res.disableFilterStats === true;
@@ -1126,6 +1285,9 @@ if (typeof module !== "undefined" && module.exports) {
     applyTabMute,
     applyAllMutedSites,
     syncGpcState,
+    getProtectionIconState,
+    updateTabIcon,
+    refreshAllTabIcons,
     tabBlockCounts,
     seenBlockRequests
   };

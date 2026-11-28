@@ -119,14 +119,7 @@ object VpnConfig {
         customBlocklist = manager.getCustomBlocklist()
         customAllowlist = manager.getCustomAllowlist()
         excludedPackages = manager.getExcludedPackages()
-        val defaultFilterUrl = "https://filters.home.xconflictionx.cc/xCONFLiCTiONx/filters.txt"
-        var storedUrls = manager.getCustomFilterUrls()
-        if (storedUrls.isEmpty()) {
-            storedUrls = setOf(defaultFilterUrl)
-            manager.setCustomFilterUrls(storedUrls)
-            manager.customFiltersEnabled = true
-        }
-        customFilterUrls = storedUrls
+        customFilterUrls = manager.getCustomFilterUrls()
         customFiltersEnabled = manager.customFiltersEnabled
         customFiltersAutoUpdate = manager.customFiltersAutoUpdate
         customFiltersLastUpdated = manager.customFiltersLastUpdated

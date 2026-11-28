@@ -101,3 +101,8 @@ pnpm-debug.log*
 
 # VPN configs
 *.conf
+
+# Privacy: local configs, secrets, databases, keys, logs, installers
+settings.json
+*.db
+*.sqlite*

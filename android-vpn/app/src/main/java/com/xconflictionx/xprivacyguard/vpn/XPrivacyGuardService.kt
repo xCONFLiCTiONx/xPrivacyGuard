@@ -1039,8 +1039,8 @@ class XPrivacyGuardService : VpnService() {
     }
 
     /**
-     * Returns local RFC1918 IPv4 subnets (e.g. 192.168.88.0/24) directly attached to the active
-     * physical Wi-Fi or Ethernet interface so local LAN services (such as xServer on 192.168.88.50)
+     * Returns local RFC1918 IPv4 subnets (e.g. 192.168.1.0/24) directly attached to the active
+     * physical Wi-Fi or Ethernet interface so local LAN services (such as xServer on 192.168.1.50)
      * connect directly over Wi-Fi instead of hairpinning out through Cloudflare and back.
      * Returns an empty list on Cellular (5G/LTE) so remote traffic still reaches xServer via Zero Trust.
      */
