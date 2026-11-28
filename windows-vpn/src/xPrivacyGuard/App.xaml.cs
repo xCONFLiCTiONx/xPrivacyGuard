@@ -18,11 +18,6 @@ public partial class App : System.Windows.Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        // Suppress WPF's legacy dotted keyboard focus rectangle globally (especially after Alt+Tab).
-        FrameworkElement.FocusVisualStyleProperty.OverrideMetadata(
-            typeof(FrameworkElement),
-            new FrameworkPropertyMetadata(null));
-
         base.OnStartup(e);
 
         // Enforce Administrator elevation even if launched from a non-elevated shell/debugger.
