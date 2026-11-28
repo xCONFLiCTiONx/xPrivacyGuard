@@ -37,6 +37,20 @@
     <SolidColorBrush x:Key="SubtleText" Color="{StaticResource SubtleTextColor}"/>
     <SolidColorBrush x:Key="PanelBorder" Color="{StaticResource BorderColor}"/>
 
+    <!-- Suppress WPF's default dotted keyboard focus adorner globally (including on Alt+Tab) -->
+    <Style x:Key="{x:Static SystemParameters.FocusVisualStyleKey}" TargetType="Control">
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate/>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style TargetType="ScrollViewer">
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+    </Style>
+
     <Style TargetType="TextBlock">
       <Setter Property="Foreground" Value="{StaticResource AppText}"/>
       <Setter Property="FontFamily" Value="Segoe UI"/>
